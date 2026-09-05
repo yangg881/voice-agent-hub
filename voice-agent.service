@@ -1,0 +1,18 @@
+[Unit]
+Description=VoiceAgentHub Audio Agent Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/voice-agent-hub
+EnvironmentFile=/opt/voice-agent-hub/.env
+ExecStart=/opt/voice-agent-hub/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+MemoryMax=600M
+
+[Install]
+WantedBy=multi-user.target

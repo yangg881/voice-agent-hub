@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  voice-agent-hub:
+    build: .
+    container_name: voice-agent-hub
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000

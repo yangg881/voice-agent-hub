@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Sensitive environment configuration (Keep .env.example only)
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases & user audio recordings
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Private developer scratchpad, internal diagnostics & VPS credentials
+_dev_scratch/
+_shot/
+.workbuddy-ai/
+deploy_update.py
+*.bak
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

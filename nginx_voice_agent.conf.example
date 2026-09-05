@@ -1,0 +1,60 @@
+# ==============================================================
+# VoiceAgentHub Nginx Configuration Example
+# Replace 'your-domain.com' with your actual domain or server IP
+# ==============================================================
+
+# HTTP server (Redirect to HTTPS)
+server {
+    listen 80;
+    listen [::]:80;
+    server_name your-domain.com;
+
+    # Allow Let's Encrypt / ACME challenges
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name your-domain.com;
+
+    # SSL Certificate Configuration
+    ssl_certificate /etc/nginx/ssl/your-domain.com.fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/your-domain.com.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Support large audio file uploads (e.g., 2-hour long meetings)
+    client_max_body_size 500M;
+    client_body_timeout 300s;
+
+    # Gzip Compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 300s;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
