@@ -3,14 +3,29 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
+
+# Support serverless / read-only filesystem (e.g. Vercel, AWS Lambda)
+IS_VERCEL = bool(os.environ.get("VERCEL"))
+try:
+    if IS_VERCEL:
+        DATA_DIR = Path("/tmp/data")
+    else:
+        DATA_DIR = BASE_DIR / "data"
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    DATA_DIR = Path("/tmp/data")
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 AUDIO_DIR = DATA_DIR / "audio"
 RAW_AUDIO_DIR = AUDIO_DIR / "raw"
 PROCESSED_AUDIO_DIR = AUDIO_DIR / "processed"
 DB_DIR = DATA_DIR / "db"
 
-for d in [DATA_DIR, AUDIO_DIR, RAW_AUDIO_DIR, PROCESSED_AUDIO_DIR, DB_DIR]:
-    d.mkdir(parents=True, exist_ok=True)
+for d in [AUDIO_DIR, RAW_AUDIO_DIR, PROCESSED_AUDIO_DIR, DB_DIR]:
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
 
 
 class Settings(BaseSettings):
