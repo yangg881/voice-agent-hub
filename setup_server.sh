@@ -45,14 +45,13 @@ systemctl daemon-reload
 systemctl enable voice-agent
 systemctl restart voice-agent
 
-# 6. 配置 Nginx 反向代理 (如已存在 nginx_voice_agent.conf)
-if [ -f "$APP_DIR/nginx_voice_agent.conf" ]; then
-    echo "🌐 配置 Nginx 反向代理..."
-    rm -f /etc/nginx/sites-enabled/default
-    cp "$APP_DIR/nginx_voice_agent.conf" /etc/nginx/sites-available/voice-agent
-    ln -sf /etc/nginx/sites-available/voice-agent /etc/nginx/sites-enabled/voice-agent
-    nginx -t && systemctl restart nginx
-fi
+# 6. 配置 Nginx 反向代理
+echo "🌐 配置 Nginx 反向代理..."
+rm -f /etc/nginx/sites-enabled/default
+cp "$APP_DIR/nginx_voice_agent.conf" /etc/nginx/sites-available/voice-agent
+ln -sf /etc/nginx/sites-available/voice-agent /etc/nginx/sites-enabled/voice-agent
+nginx -t
+systemctl restart nginx
 
 # 7. 健康检查
 echo "⏳ 等待服务启动中..."
@@ -60,8 +59,7 @@ sleep 3
 HEALTH=$(curl -s http://127.0.0.1:8000/api/health || true)
 echo "🔍 服务健康检查结果: $HEALTH"
 
-SERVER_IP=$(curl -s ifconfig.me || hostname -I | awk '{print $1}')
 echo "=========================================================="
-echo "🎉 部署完成！"
-echo "👉 请在浏览器中访问: http://$SERVER_IP:8000 或配置 Nginx 域名访问"
+echo "🎉 部署全部成功！"
+echo "👉 请在手机或电脑浏览器中直接访问: http://128.1.38.216"
 echo "=========================================================="

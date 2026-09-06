@@ -10,7 +10,17 @@ from app.services.asr.gemini_asr import GeminiAsrProvider
 from app.services.asr.mock_asr import MockAsrProvider
 from app.services.cleaning_service import CleaningService
 from app.services.agent_service import MeetingAgentService, AgentAnalysisResult
+from app.services.project_overview_service import refresh_project_overview, get_recording_project_ids
 from app.config import settings
+
+
+async def _refresh_linked_project_overviews(db: Session, recording: Recording):
+    """Best-effort：刷新该录音关联的所有标签的 AI 进度看板，失败不影响主流程。"""
+    try:
+        for pid in get_recording_project_ids(db, recording):
+            await refresh_project_overview(pid)
+    except Exception:
+        traceback.print_exc()
 
 
 def get_asr_provider(provider_name: str) -> BaseAsrProvider:
@@ -250,6 +260,9 @@ async def run_pipeline(recording_id: str, asr_provider_name: str = None):
         # Stage 5: Apply project updates & timelines
         apply_project_updates(db, recording, insights)
 
+        # Stage 6: Refresh AI progress dashboards for linked projects (best-effort)
+        await _refresh_linked_project_overviews(db, recording)
+
         # Finish pipeline
         recording.status = "completed"
         recording.progress = 100
@@ -368,6 +381,9 @@ async def run_session_finalization(recording_id: str):
 
         # Apply project updates
         apply_project_updates(db, recording, insights)
+
+        # Refresh AI progress dashboards for linked projects (best-effort)
+        await _refresh_linked_project_overviews(db, recording)
 
         recording.status = "completed"
         recording.progress = 100

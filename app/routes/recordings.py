@@ -117,7 +117,7 @@ async def upload_stream_chunk(
 
     if not recording:
         rec_id = session_id or str(uuid.uuid4())
-        rec_title = title.strip() if title and title.strip() else f"微信对讲速记 {now_str}"
+        rec_title = title.strip() if title and title.strip() else f"实时语音速记 {now_str}"
         target_proj_id = project_id if project_id and project_id != "global" and project_id.strip() else None
         recording = Recording(
             id=rec_id,
@@ -129,7 +129,7 @@ async def upload_stream_chunk(
             primary_project_id=target_proj_id,
             status="recording",
             progress=20,
-            status_message="正在实时对讲记录中...",
+            status_message="正在实时语音记录中...",
         )
         db.add(recording)
         db.commit()

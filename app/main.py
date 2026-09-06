@@ -57,12 +57,8 @@ app.include_router(actions_router, dependencies=[Depends(verify_access_token)])
 
 # Mount Static directory
 static_dir = BASE_DIR / "app" / "static"
-try:
-    static_dir.mkdir(parents=True, exist_ok=True)
-except OSError:
-    pass
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/api/health")

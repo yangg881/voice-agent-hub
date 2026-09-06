@@ -1,25 +1,16 @@
 import os
 from pathlib import Path
-from pydantic import BaseModel
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from app.config import settings, BASE_DIR
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
-
-class SettingsPayload(BaseModel):
-    volc_app_id: str = ""
-    volc_access_token: str = ""
-    volc_access_key: str = ""
-    volc_secret_key: str = ""
-    volc_cluster_id: str = ""
-    volc_streaming_cluster_id: str = ""
-    volc_file_cluster_id: str = ""
-    dashscope_api_key: str = ""
-    gemini_api_key: str = ""
-    deepseek_api_key: str = ""
-    default_asr_provider: str = "doubao"
-    default_llm_provider: str = "deepseek"
+# 这些字段在 GET 时返回脱敏值，POST 时跳过含 **** 的未修改值
+MASKED_KEYS = {
+    "VOLC_APP_ID", "VOLC_ACCESS_TOKEN", "VOLC_ACCESS_KEY",
+    "VOLC_SECRET_KEY", "DASHSCOPE_API_KEY", "GEMINI_API_KEY",
+    "DEEPSEEK_API_KEY", "ACCESS_TOKEN",
+}
 
 
 def mask_key(k: str) -> str:
@@ -32,94 +23,92 @@ def mask_key(k: str) -> str:
 
 @router.get("")
 def get_settings():
-    # All credentials are masked in responses; plaintext keys never leave the server.
-    return {
-        "volc_app_id_masked": mask_key(settings.VOLC_APP_ID),
-        "volc_access_token_masked": mask_key(settings.VOLC_ACCESS_TOKEN),
-        "volc_access_key_masked": mask_key(settings.VOLC_ACCESS_KEY),
-        "volc_secret_key_masked": mask_key(settings.VOLC_SECRET_KEY),
-        "volc_cluster_id": settings.VOLC_CLUSTER_ID,
-        "volc_streaming_cluster_id": settings.VOLC_STREAMING_CLUSTER_ID,
-        "volc_file_cluster_id": settings.VOLC_FILE_CLUSTER_ID,
-        "dashscope_api_key_masked": mask_key(settings.DASHSCOPE_API_KEY),
-        "gemini_api_key_masked": mask_key(settings.GEMINI_API_KEY),
-        "deepseek_api_key_masked": mask_key(settings.DEEPSEEK_API_KEY),
-        "has_volc_configured": bool((settings.VOLC_APP_ID or settings.VOLC_ACCESS_KEY) and (settings.VOLC_ACCESS_TOKEN or settings.VOLC_SECRET_KEY)),
-        "has_dashscope_configured": bool(settings.DASHSCOPE_API_KEY),
-        "has_gemini_configured": bool(settings.GEMINI_API_KEY),
-        "has_deepseek_configured": bool(settings.DEEPSEEK_API_KEY),
-        "default_asr_provider": settings.DEFAULT_ASR_PROVIDER,
-        "default_llm_provider": settings.DEFAULT_LLM_PROVIDER,
+    """返回所有可配置项，密钥字段脱敏。key 与 .env 环境变量名一致（大写）。"""
+    mapping = {
+        "VOLC_APP_ID": settings.VOLC_APP_ID,
+        "VOLC_ACCESS_TOKEN": settings.VOLC_ACCESS_TOKEN,
+        "VOLC_ACCESS_KEY": settings.VOLC_ACCESS_KEY,
+        "VOLC_SECRET_KEY": settings.VOLC_SECRET_KEY,
+        "VOLC_CLUSTER_ID": settings.VOLC_CLUSTER_ID,
+        "VOLC_STREAMING_CLUSTER_ID": settings.VOLC_STREAMING_CLUSTER_ID,
+        "VOLC_FILE_CLUSTER_ID": settings.VOLC_FILE_CLUSTER_ID,
+        "DASHSCOPE_API_KEY": settings.DASHSCOPE_API_KEY,
+        "GEMINI_API_KEY": settings.GEMINI_API_KEY,
+        "DEEPSEEK_API_KEY": settings.DEEPSEEK_API_KEY,
+        "DEFAULT_ASR_PROVIDER": settings.DEFAULT_ASR_PROVIDER,
+        "DEFAULT_LLM_PROVIDER": settings.DEFAULT_LLM_PROVIDER,
+        "MAX_CONTENT_LENGTH": settings.MAX_CONTENT_LENGTH,
+        "ACCESS_TOKEN": settings.ACCESS_TOKEN,
+        "CORS_ORIGINS": settings.CORS_ORIGINS,
     }
+    result = {}
+    for k, v in mapping.items():
+        result[k] = mask_key(v) if k in MASKED_KEYS else v
+    result["has_volc_configured"] = bool(
+        (settings.VOLC_APP_ID or settings.VOLC_ACCESS_KEY)
+        and (settings.VOLC_ACCESS_TOKEN or settings.VOLC_SECRET_KEY)
+    )
+    result["has_dashscope_configured"] = bool(settings.DASHSCOPE_API_KEY)
+    result["has_gemini_configured"] = bool(settings.GEMINI_API_KEY)
+    result["has_deepseek_configured"] = bool(settings.DEEPSEEK_API_KEY)
+    return result
 
 
 @router.post("")
-def update_settings(payload: SettingsPayload):
+def update_settings(payload: dict = Body(...)):
+    """
+    接收任意 key=value（key 不区分大小写，统一转大写）。
+    - 含 **** 的脱敏值自动跳过（用户未修改）
+    - 空字符串的密钥字段自动跳过
+    - 写回 .env 时保留原有注释、空行和顺序，仅替换匹配行；新 key 追加到末尾
+    """
     env_path = BASE_DIR / ".env"
     existing_lines = []
     if env_path.exists():
         with open(env_path, "r", encoding="utf-8") as f:
             existing_lines = f.readlines()
 
-    env_dict = {}
+    updates = {}
+    for k, v in payload.items():
+        if v is None:
+            continue
+        k_upper = k.strip().upper()
+        if not k_upper:
+            continue
+        v_str = str(v).strip()
+        if "****" in v_str:
+            continue  # 脱敏值，用户未修改
+        if not v_str and k_upper in MASKED_KEYS:
+            continue  # 空密钥不覆盖
+        updates[k_upper] = v_str
+
+    if not updates:
+        return {"message": "没有需要更新的设置", "updated": []}
+
+    # 逐行替换，保留注释和顺序
+    new_lines = []
+    found_keys = set()
     for line in existing_lines:
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            env_dict[k.strip()] = v.strip()
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key = stripped.split("=", 1)[0].strip().upper()
+            if key in updates:
+                new_lines.append(f"{key}={updates[key]}\n")
+                found_keys.add(key)
+                continue
+        new_lines.append(line)
 
-    # Update values if provided (don't overwrite with masked string or empty unless desired)
-    if payload.volc_app_id and not payload.volc_app_id.startswith("****") and "****" not in payload.volc_app_id:
-        env_dict["VOLC_APP_ID"] = payload.volc_app_id
-        settings.VOLC_APP_ID = payload.volc_app_id
+    # 追加不存在的新 key
+    for k, v in updates.items():
+        if k not in found_keys:
+            if new_lines and not new_lines[-1].endswith("\n"):
+                new_lines.append("\n")
+            new_lines.append(f"{k}={v}\n")
 
-    if payload.volc_access_token and "****" not in payload.volc_access_token:
-        env_dict["VOLC_ACCESS_TOKEN"] = payload.volc_access_token
-        settings.VOLC_ACCESS_TOKEN = payload.volc_access_token
-
-    if payload.volc_access_key and "****" not in payload.volc_access_key:
-        env_dict["VOLC_ACCESS_KEY"] = payload.volc_access_key
-        settings.VOLC_ACCESS_KEY = payload.volc_access_key
-
-    if payload.volc_secret_key and "****" not in payload.volc_secret_key:
-        env_dict["VOLC_SECRET_KEY"] = payload.volc_secret_key
-        settings.VOLC_SECRET_KEY = payload.volc_secret_key
-
-    if payload.volc_cluster_id:
-        env_dict["VOLC_CLUSTER_ID"] = payload.volc_cluster_id.strip()
-        settings.VOLC_CLUSTER_ID = payload.volc_cluster_id.strip()
-
-    if payload.volc_streaming_cluster_id:
-        env_dict["VOLC_STREAMING_CLUSTER_ID"] = payload.volc_streaming_cluster_id.strip()
-        settings.VOLC_STREAMING_CLUSTER_ID = payload.volc_streaming_cluster_id.strip()
-
-    if payload.volc_file_cluster_id:
-        env_dict["VOLC_FILE_CLUSTER_ID"] = payload.volc_file_cluster_id.strip()
-        settings.VOLC_FILE_CLUSTER_ID = payload.volc_file_cluster_id.strip()
-
-    if payload.dashscope_api_key and not payload.dashscope_api_key.startswith("****"):
-        env_dict["DASHSCOPE_API_KEY"] = payload.dashscope_api_key
-        settings.DASHSCOPE_API_KEY = payload.dashscope_api_key
-
-    if payload.gemini_api_key and not payload.gemini_api_key.startswith("****"):
-        env_dict["GEMINI_API_KEY"] = payload.gemini_api_key
-        settings.GEMINI_API_KEY = payload.gemini_api_key
-
-    if payload.deepseek_api_key and not payload.deepseek_api_key.startswith("****"):
-        env_dict["DEEPSEEK_API_KEY"] = payload.deepseek_api_key
-        settings.DEEPSEEK_API_KEY = payload.deepseek_api_key
-
-    if payload.default_asr_provider:
-        env_dict["DEFAULT_ASR_PROVIDER"] = payload.default_asr_provider
-        settings.DEFAULT_ASR_PROVIDER = payload.default_asr_provider
-
-    if payload.default_llm_provider:
-        env_dict["DEFAULT_LLM_PROVIDER"] = payload.default_llm_provider
-        settings.DEFAULT_LLM_PROVIDER = payload.default_llm_provider
-
-    # Write back to .env
     with open(env_path, "w", encoding="utf-8") as f:
-        for k, v in env_dict.items():
-            f.write(f"{k}={v}\n")
+        f.writelines(new_lines)
 
-    return {"message": "系统设置与 API 密钥已成功保存并立即生效！"}
+    return {
+        "message": "设置已保存到 .env，重启服务后生效",
+        "updated": sorted(updates.keys()),
+    }
