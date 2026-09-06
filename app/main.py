@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from app.config import settings, BASE_DIR
 from app.database import init_db
 from app.routes.recordings import router as recordings_router
@@ -28,7 +28,11 @@ async def verify_access_token(request: Request):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize SQLite tables on startup
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        import logging
+        logging.getLogger("uvicorn").warning(f"lifespan database init failed (non-fatal): {e}")
     yield
 
 
@@ -79,5 +83,8 @@ def health_check():
 def index_page():
     index_file = static_dir / "index.html"
     if index_file.exists():
-        return FileResponse(str(index_file))
+        try:
+            return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
+        except Exception:
+            return FileResponse(str(index_file))
     return {"message": "VoiceAgentHub API Service is running."}

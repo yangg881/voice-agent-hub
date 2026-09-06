@@ -20,13 +20,16 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
 )
 
-# Enable WAL mode for high performance concurrent SQLite operations
+# Enable WAL mode for high performance concurrent SQLite operations when supported
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     try:
         cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+        except Exception:
+            pass
         cursor.close()
     except Exception:
         pass
@@ -175,7 +178,11 @@ def init_db():
         DB_DIR.mkdir(parents=True, exist_ok=True)
     except Exception:
         pass
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        import logging
+        logging.getLogger("uvicorn").warning(f"Database table creation notice: {e}")
 
 
 def get_db() -> Generator[Session, None, None]:
