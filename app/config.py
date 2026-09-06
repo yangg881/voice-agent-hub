@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -81,6 +82,35 @@ class Settings(BaseSettings):
 
     # CORS allowed origins, comma separated. "*" means any origin.
     CORS_ORIGINS: str = "*"
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, v):
+        if v is None or v == "":
+            return False
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes", "on")
+        return bool(v)
+
+    @field_validator("PORT", mode="before")
+    @classmethod
+    def parse_port(cls, v):
+        if v is None or v == "":
+            return 8000
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return 8000
+
+    @field_validator("MAX_CONTENT_LENGTH", mode="before")
+    @classmethod
+    def parse_max_content(cls, v):
+        if v is None or v == "":
+            return 500 * 1024 * 1024
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return 500 * 1024 * 1024
 
     class Config:
         env_file = str(BASE_DIR / ".env")

@@ -1,61 +1,28 @@
-import os
 import sys
 import traceback
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse, Response
 
+# Ensure root directory is in sys.path
 root = Path(__file__).resolve().parent.parent
 if str(root) not in sys.path:
     sys.path.insert(0, str(root))
 
-app = FastAPI(title="VoiceAgentHub")
+try:
+    from app.main import app
+except Exception:
+    from fastapi import FastAPI
+    from fastapi.responses import HTMLResponse
 
-@app.get("/api/health")
-def health():
-    return {
-        "status": "healthy",
-        "app": "VoiceAgentHub",
-        "runtime": "vercel-serverless",
-        "python": sys.version,
-    }
+    app = FastAPI(title="VoiceAgentHub Serverless Fallback")
+    err_trace = traceback.format_exc()
 
-@app.get("/api/test-imports")
-def test_imports():
-    results = {}
-    for mod in [
-        "app.config",
-        "app.database",
-        "app.services.audio_service",
-        "app.services.pipeline",
-        "app.routes.recordings",
-        "app.routes.projects",
-        "app.routes.settings",
-        "app.routes.actions",
-    ]:
-        try:
-            __import__(mod)
-            results[mod] = "OK"
-        except BaseException:
-            results[mod] = traceback.format_exc()
-    return results
-
-@app.get("/static/{file_path:path}")
-def serve_static(file_path: str):
-    target = root / "app" / "static" / file_path
-    if target.exists() and target.is_file():
-        ext = target.suffix.lower()
-        content_type = "application/javascript" if ext == ".js" else (
-            "text/css" if ext == ".css" else (
-                "text/html" if ext in [".html", ".htm"] else "application/octet-stream"
-            )
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+    def error_route(path: str = ""):
+        return HTMLResponse(
+            f"<html><body style='font-family:sans-serif;padding:2rem;background:#0f172a;color:#f8fafc;'>"
+            f"<h2 style='color:#ef4444;'>VoiceAgentHub Startup Error</h2>"
+            f"<pre style='background:#1e293b;padding:1rem;border-radius:8px;overflow:auto;'>{err_trace}</pre>"
+            f"</body></html>",
+            status_code=500,
         )
-        return Response(content=target.read_bytes(), media_type=content_type)
-    raise HTTPException(status_code=404, detail="Not found")
 
-@app.get("/")
-def home():
-    index_file = root / "app" / "static" / "index.html"
-    if index_file.exists():
-        return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>VoiceAgentHub Serverless Ready</h1>")
