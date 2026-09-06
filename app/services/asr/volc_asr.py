@@ -6,7 +6,7 @@ import logging
 import os
 import struct
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Union
 import httpx
 import websockets
 
@@ -75,7 +75,7 @@ def _extract_result_text(payload_obj: dict) -> str:
     return str(payload_obj.get("text", "")).strip()
 
 
-def _parse_server_message(message: bytes | str) -> str:
+def _parse_server_message(message: Union[bytes, str]) -> str:
     if isinstance(message, str):
         try:
             payload_obj = json.loads(message)
