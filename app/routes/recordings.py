@@ -860,6 +860,21 @@ def update_action_items(recording_id: str, items: list = Body(..., embed=False),
     return {"message": "待办状态更新成功"}
 
 
+class RecordingTitleUpdate(BaseModel):
+    title: str
+
+
+@router.patch("/{recording_id}/title")
+def update_recording_title(recording_id: str, body: RecordingTitleUpdate, db: Session = Depends(get_db)):
+    r = db.query(Recording).filter(Recording.id == recording_id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="录音不存在")
+    r.title = body.title.strip() or r.title
+    db.commit()
+    db.refresh(r)
+    return {"id": r.id, "title": r.title}
+
+
 @router.get("/{recording_id}/export")
 def export_markdown(recording_id: str, db: Session = Depends(get_db)):
     r = db.query(Recording).filter(Recording.id == recording_id).first()
