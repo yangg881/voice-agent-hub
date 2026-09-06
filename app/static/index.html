@@ -53,6 +53,28 @@
 <body class="bg-slate-50 text-slate-800 antialiased overflow-hidden">
 <div id="app" v-cloak class="flex flex-col sm:flex-row">
 
+  <!-- ===== 访问口令锁屏 ===== -->
+  <div v-if="!authed" class="fixed inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center px-8 safe-top safe-bottom">
+    <div class="w-full max-w-sm">
+      <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg mb-4">
+          <i data-lucide="mic" class="w-8 h-8 text-white"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-800">语音纪要</h2>
+        <p class="text-sm text-slate-400 mt-1.5">请输入访问口令以继续</p>
+      </div>
+      <input v-model="authInput" @keyup.enter="submitAuth" type="password" autocomplete="current-password" placeholder="访问口令"
+             class="w-full px-4 py-3 text-base border rounded-xl bg-white focus:outline-none focus:border-brand-300 transition"
+             :class="authError ? 'border-rose-300' : 'border-slate-200'">
+      <p v-if="authError" class="text-sm text-rose-500 mt-2">{{ authError }}</p>
+      <button @click="submitAuth" :disabled="authChecking"
+              class="w-full mt-4 py-3 rounded-xl bg-brand-600 text-white font-semibold text-base active:bg-brand-700 disabled:opacity-50 transition">
+        {{ authChecking ? '验证中...' : '进入' }}
+      </button>
+      <p class="text-xs text-slate-300 text-center mt-6">同一台设备只需输入一次</p>
+    </div>
+  </div>
+
   <!-- ===== 主内容区 ===== -->
   <div class="flex-1 flex flex-col min-h-0 order-1">
     <!-- 顶部栏 -->
@@ -300,7 +322,7 @@
           </div>
           <div class="h-1.5 bg-amber-100 rounded-full overflow-hidden"><div class="h-full bg-amber-400 rounded-full transition-all duration-500" :style="{width:detailData.progress+'%'}"></div></div>
         </div>
-        <audio v-if="detailData.status==='completed'" ref="audioPlayer" :src="'/api/recordings/'+detailId+'/audio'" controls
+        <audio v-if="detailData.status==='completed'" ref="audioPlayer" :src="audioSrc" controls
                @timeupdate="onAudioTime" @play="onAudioTime" class="w-full mt-3 rounded-lg"></audio>
         <div class="flex gap-1 mt-4 border-b border-slate-100 sticky top-0 bg-white z-10 -mx-4 px-4 overflow-x-auto">
           <button v-for="t in detailTabs" :key="t.id" @click="detailTab=t.id" :class="detailTab===t.id?'text-brand-600 border-b-2 border-brand-600 font-semibold':'text-slate-500'" class="px-3 py-2.5 text-sm transition-colors whitespace-nowrap shrink-0">{{ t.name }}</button>
@@ -704,6 +726,12 @@ createApp({
       newTagColor: '#6366f1',
       assignTagIds: [],
       filterTag: 'all',
+      // --- 访问口令 ---
+      authed: false,
+      authInput: '',
+      authError: '',
+      authChecking: false,
+      accessToken: '',
       // --- 标签进度看板 ---
       dashProjectId: null,
       dashData: null,
@@ -766,12 +794,27 @@ createApp({
     pendingActionCount() {
       return this.globalActions.filter(a => a.status !== 'completed').length;
     },
+    audioSrc() {
+      const base = '/api/recordings/' + this.detailId + '/audio';
+      return this.appendToken(base);
+    },
   },
   updated() { this.refreshIcons(); },
+  created() {
+    // 全局注入访问口令：所有 /api 请求自动带上（列表、详情、看板、待办等）
+    const origFetch = window.fetch.bind(window);
+    window.fetch = (url, opts) => {
+      const t = localStorage.getItem('vh_access_token');
+      if (t && typeof url === 'string' && url.indexOf('/api') === 0) {
+        opts = opts || {};
+        opts.headers = Object.assign({}, opts.headers || {}, {'X-Access-Token': t});
+      }
+      return origFetch(url, opts);
+    };
+  },
   mounted() {
-    this.parseHash();
     window.addEventListener('popstate', this.onPopState);
-    this.loadAll();
+    this.checkAuth();
   },
   beforeUnmount() {
     window.removeEventListener('popstate', this.onPopState);
@@ -781,6 +824,61 @@ createApp({
     if (this.chunkAudio) { try { this.chunkAudio.pause(); } catch(e) {} }
   },
   methods: {
+    // --- 访问口令 ---
+    async checkAuth() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        if (!data.auth_enabled) { this.authed = true; this.boot(); return; }
+
+        // 访问 #logout 可清除本机保存的口令
+        if (location.hash === '#logout') {
+          localStorage.removeItem('vh_access_token');
+          history.replaceState(null, '', '#/recordings');
+        }
+
+        const saved = localStorage.getItem('vh_access_token') || '';
+        if (saved) {
+          const v = await fetch('/api/recordings?limit=1', {headers: {'X-Access-Token': saved}});
+          if (v.ok) {
+            this.accessToken = saved;
+            this.authed = true;
+            this.boot();
+            return;
+          }
+          localStorage.removeItem('vh_access_token');
+        }
+      } catch(e) {}
+    },
+    async submitAuth() {
+      if (!this.authInput.trim() || this.authChecking) return;
+      this.authChecking = true;
+      this.authError = '';
+      try {
+        const t = this.authInput.trim();
+        const res = await fetch('/api/recordings?limit=1', {headers: {'X-Access-Token': t}});
+        if (res.ok) {
+          localStorage.setItem('vh_access_token', t);
+          this.accessToken = t;
+          this.authed = true;
+          this.authInput = '';
+          this.boot();
+        } else {
+          this.authError = '口令不对，再试一次';
+        }
+      } catch(e) {
+        this.authError = '网络异常，请稍后重试';
+      }
+      this.authChecking = false;
+    },
+    appendToken(url) {
+      if (!this.accessToken) return url;
+      return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(this.accessToken);
+    },
+    boot() {
+      this.parseHash();
+      this.loadAll();
+    },
     refreshIcons() {
       nextTick(() => { if (window.lucide) try { lucide.createIcons(); } catch(e) {} });
     },
@@ -941,7 +1039,7 @@ createApp({
       if (!url) return;
       if (this.chunkAudio) { try { this.chunkAudio.pause(); } catch(e) {} }
       this.playingChunkUrl = url;
-      const a = new Audio(url);
+      const a = new Audio(this.appendToken(url));
       this.chunkAudio = a;
       a.onended = () => { if (this.playingChunkUrl === url) this.playingChunkUrl = ''; };
       a.onerror = () => { if (this.playingChunkUrl === url) this.playingChunkUrl = ''; this.showToast('音频播放失败', 'error'); };
@@ -1251,6 +1349,7 @@ createApp({
       };
       xhr.onerror = () => { this.uploading = false; this.showToast('上传失败', 'error'); };
       xhr.open('POST', '/api/recordings/upload');
+      if (this.accessToken) xhr.setRequestHeader('X-Access-Token', this.accessToken);
       xhr.send(fd);
     },
     async createTag() {
