@@ -1,5 +1,4 @@
 import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -25,21 +24,17 @@ async def verify_access_token(request: Request):
         raise HTTPException(status_code=401, detail="未授权访问：缺少或错误的访问令牌")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize SQLite tables on startup
-    try:
-        init_db()
-    except Exception as e:
-        import logging
-        logging.getLogger("uvicorn").warning(f"lifespan database init failed (non-fatal): {e}")
-    yield
+# Initialize SQLite tables safely on startup (serverless & long-running friendly)
+try:
+    init_db()
+except Exception as e:
+    import logging
+    logging.getLogger("uvicorn").warning(f"Database init notice: {e}")
 
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    lifespan=lifespan,
 )
 
 # CORS: same-origin frontend does not need CORS; keep it spec-valid.
