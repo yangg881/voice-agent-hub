@@ -23,10 +23,13 @@ engine = create_engine(
 # Enable WAL mode for high performance concurrent SQLite operations
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.close()
+    try:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
+    except Exception:
+        pass
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -167,6 +170,11 @@ class SystemSetting(Base):
 
 
 def init_db():
+    from app.config import DB_DIR
+    try:
+        DB_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
     Base.metadata.create_all(bind=engine)
 
 
