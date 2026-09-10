@@ -1,16 +1,9 @@
 import os
-import sys
-from pathlib import Path
-
-# Ensure project root is in sys.path regardless of execution context
-_root = Path(__file__).resolve().parent.parent
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from app.config import settings, BASE_DIR
 from app.database import init_db
 from app.routes.recordings import router as recordings_router
@@ -32,17 +25,17 @@ async def verify_access_token(request: Request):
         raise HTTPException(status_code=401, detail="未授权访问：缺少或错误的访问令牌")
 
 
-# Initialize SQLite tables safely on startup (serverless & long-running friendly)
-try:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize SQLite tables on startup
     init_db()
-except Exception as e:
-    import logging
-    logging.getLogger("uvicorn").warning(f"Database init notice: {e}")
+    yield
 
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
+    lifespan=lifespan,
 )
 
 # CORS: same-origin frontend does not need CORS; keep it spec-valid.
@@ -64,12 +57,8 @@ app.include_router(actions_router, dependencies=[Depends(verify_access_token)])
 
 # Mount Static directory
 static_dir = BASE_DIR / "app" / "static"
-try:
-    static_dir.mkdir(parents=True, exist_ok=True)
-except OSError:
-    pass
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/api/health")
@@ -86,8 +75,5 @@ def health_check():
 def index_page():
     index_file = static_dir / "index.html"
     if index_file.exists():
-        try:
-            return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
-        except Exception:
-            return FileResponse(str(index_file))
+        return FileResponse(str(index_file))
     return {"message": "VoiceAgentHub API Service is running."}

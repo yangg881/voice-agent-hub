@@ -1,39 +1,16 @@
 import os
 from pathlib import Path
-from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-def _get_data_dir() -> Path:
-    # First try default local data directory
-    candidate = BASE_DIR / "data"
-    try:
-        candidate.mkdir(parents=True, exist_ok=True)
-        test_file = candidate / ".write_test"
-        test_file.touch()
-        test_file.unlink()
-        return candidate
-    except (OSError, PermissionError):
-        # Read-only filesystem detected (e.g. Vercel, AWS Lambda)
-        fallback = Path("/tmp/voice_agent_data")
-        try:
-            fallback.mkdir(parents=True, exist_ok=True)
-            return fallback
-        except Exception:
-            return Path("/tmp")
-
-DATA_DIR = _get_data_dir()
+DATA_DIR = BASE_DIR / "data"
 AUDIO_DIR = DATA_DIR / "audio"
 RAW_AUDIO_DIR = AUDIO_DIR / "raw"
 PROCESSED_AUDIO_DIR = AUDIO_DIR / "processed"
 DB_DIR = DATA_DIR / "db"
 
-for d in [AUDIO_DIR, RAW_AUDIO_DIR, PROCESSED_AUDIO_DIR, DB_DIR]:
-    try:
-        d.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass
+for d in [DATA_DIR, AUDIO_DIR, RAW_AUDIO_DIR, PROCESSED_AUDIO_DIR, DB_DIR]:
+    d.mkdir(parents=True, exist_ok=True)
 
 
 class Settings(BaseSettings):
@@ -82,35 +59,6 @@ class Settings(BaseSettings):
 
     # CORS allowed origins, comma separated. "*" means any origin.
     CORS_ORIGINS: str = "*"
-
-    @field_validator("DEBUG", mode="before")
-    @classmethod
-    def parse_debug(cls, v):
-        if v is None or v == "":
-            return False
-        if isinstance(v, str):
-            return v.lower() in ("true", "1", "yes", "on")
-        return bool(v)
-
-    @field_validator("PORT", mode="before")
-    @classmethod
-    def parse_port(cls, v):
-        if v is None or v == "":
-            return 8000
-        try:
-            return int(v)
-        except (ValueError, TypeError):
-            return 8000
-
-    @field_validator("MAX_CONTENT_LENGTH", mode="before")
-    @classmethod
-    def parse_max_content(cls, v):
-        if v is None or v == "":
-            return 500 * 1024 * 1024
-        try:
-            return int(v)
-        except (ValueError, TypeError):
-            return 500 * 1024 * 1024
 
     class Config:
         env_file = str(BASE_DIR / ".env")

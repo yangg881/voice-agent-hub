@@ -4,7 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>语音纪要</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F46E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z'/><path d='M19 10v2a7 7 0 0 1-14 0v-2'/><line x1='12' x2='12' y1='19' y2='22'/></svg>">
+  <script>
+    (function(){
+      try {
+        var m = localStorage.getItem('vh_theme') || 'system';
+        var dark = m === 'dark' || (m === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', !!dark);
+      } catch(e){}
+    })();
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23343C66' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z'/><path d='M19 10v2a7 7 0 0 1-14 0v-2'/><line x1='12' x2='12' y1='19' y2='22'/></svg>">
   <script src="/static/vendor/vue.global.prod.js"></script>
   <script src="/static/vendor/tailwind.js"></script>
   <script>
@@ -12,9 +21,10 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50:'#eef2ff', 100:'#e0e7ff', 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca' }
+            brand: { 50:'#f3f4f9', 100:'#e3e5f0', 200:'#c7cbe0', 500:'#4a537f', 600:'#343c66', 700:'#262c4d' }
           },
-          boxShadow: { card: '0 1px 3px rgba(0,0,0,0.04)', nav: '0 -2px 12px rgba(0,0,0,0.06)' }
+          fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','PingFang SC','HarmonyOS Sans SC','MiSans','Microsoft YaHei','Segoe UI','Roboto','sans-serif'] },
+          boxShadow: { card: '0 1px 2px rgba(15,23,42,0.03)', nav: '0 -1px 8px rgba(15,23,42,0.04)' }
         }
       }
     }
@@ -25,12 +35,13 @@
     @media (max-width:640px){html{font-size:17.5px}}
     [v-cloak]{display:none}
     *{-webkit-tap-highlight-color:transparent}
+    body{font-variant-numeric:tabular-nums;font-feature-settings:/tnum/ 1}
     html,body{overscroll-behavior:none}
     #app{height:100vh;height:100dvh}
     .overscroll-contain{overscroll-behavior-y:contain}
     ::-webkit-scrollbar{width:4px;height:4px}
     ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:9999px}
-    .active-segment{border-left:3px solid #4f46e5;background:rgba(99,102,241,0.07)}
+    .active-segment{border-left:2px solid #343c66;background:rgba(52,60,102,0.05)}
     .safe-bottom{padding-bottom:max(0.5rem,env(safe-area-inset-bottom))}
     .safe-top{padding-top:max(0.5rem,env(safe-area-inset-top))}
     button,a,input,select,textarea{touch-action:manipulation}
@@ -46,6 +57,95 @@
     .recording-pulse{animation:pulseRing 1.2s ease-out infinite}
     .line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
     .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    /* ===== 看板宽抽屉 ===== */
+    @keyframes drawerIn{from{transform:translateX(4%);opacity:.4}to{transform:translateX(0);opacity:1}}
+    .animate-drawer-in{animation:drawerIn .26s cubic-bezier(.22,.61,.36,1)}
+    @media (max-width:639px){.animate-drawer-in{animation:fadeIn .2s ease-out}}
+    @media (min-width:768px){
+      .dash-cols{columns:2;column-gap:.75rem}
+      .dash-cols>*{break-inside:avoid;margin-bottom:.75rem}
+    }
+    /* ===== 暗色主题：类级覆盖（无需逐元素 dark:） ===== */
+    html.dark{color-scheme:dark}
+    html.dark body{background-color:#0b0f1a;color:#e6eaf2}
+    html.dark ::-webkit-scrollbar-thumb{background:#2c3650}
+    html.dark .bg-white{background-color:#141a2a}
+    html.dark .bg-slate-50{background-color:#0f1424}
+    html.dark .bg-slate-50\/60{background-color:rgba(20,26,42,.55)}
+    html.dark .bg-slate-50\/95{background-color:rgba(11,15,26,.92)}
+    html.dark .bg-slate-100{background-color:#1c2333}
+    html.dark .bg-slate-200{background-color:#283044}
+    html.dark .bg-brand-50{background-color:#1a2138}
+    html.dark .bg-brand-50\/60{background-color:rgba(26,33,56,.55)}
+    html.dark .bg-brand-100{background-color:#232c47}
+    html.dark .bg-brand-600{background-color:#4c5892}
+    html.dark .hover\:bg-brand-700:hover{background-color:#5d69a6}
+    html.dark .text-slate-900{color:#f1f4fa}
+    html.dark .text-slate-800{color:#e6eaf2}
+    html.dark .text-slate-700{color:#c9d1e0}
+    html.dark .text-slate-600{color:#a7b0c4}
+    html.dark .text-slate-500{color:#8c95ab}
+    html.dark .text-slate-400{color:#6b7590}
+    html.dark .text-slate-300{color:#525c75}
+    html.dark .text-brand-700{color:#b6bee4}
+    html.dark .text-brand-600{color:#a3adde}
+    html.dark .text-brand-500{color:#8f9ad2}
+    html.dark .text-brand-400{color:#7c88c6}
+    html.dark .text-rose-700{color:#f1819f}
+    html.dark .text-rose-600{color:#f08aa4}
+    html.dark .text-amber-700{color:#e2b44f}
+    html.dark .text-amber-600{color:#e0b055}
+    html.dark .text-emerald-600{color:#4ecf9a}
+    html.dark .border-slate-100{border-color:#232b3d}
+    html.dark .border-slate-200\/70{border-color:rgba(40,48,68,.85)}
+    html.dark .border-slate-200{border-color:#283044}
+    html.dark .border-slate-300{border-color:#36405a}
+    html.dark .border-brand-100{border-color:#2a3352}
+    html.dark .border-brand-300{border-color:#41508a}
+    html.dark .border-rose-100{border-color:#4a2334}
+    html.dark .border-rose-200{border-color:#5a2a3e}
+    html.dark .border-amber-200{border-color:#544018}
+    html.dark .border-amber-300{border-color:#6b5020}
+    html.dark .bg-rose-50{background-color:#2a1622}
+    html.dark .bg-rose-100{background-color:#3a1c2c}
+    html.dark .bg-amber-50{background-color:#2a2113}
+    html.dark .bg-emerald-50{background-color:#12291f}
+    html.dark .ring-slate-50{--tw-ring-color:#0f1424}
+    html.dark .shadow-card{box-shadow:0 1px 2px rgba(0,0,0,.4)}
+    html.dark .shadow-nav{box-shadow:0 -1px 8px rgba(0,0,0,.45)}
+    html.dark .shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.35)}
+    html.dark input,html.dark select,html.dark textarea{background-color:#141a2a;color:#e6eaf2}
+    html.dark input::placeholder,html.dark textarea::placeholder{color:#5b6479}
+    html.dark .active-segment{border-left-color:#a3adde;background:rgba(163,173,222,.10)}
+    /* ===== 暗色补丁 2：半透明色阶兜底（/NN 变体） ===== */
+    html.dark [class*="bg-slate-100/"]{background-color:rgba(28,35,51,.70)}
+    html.dark [class*="bg-slate-200/"]{background-color:rgba(40,48,68,.70)}
+    html.dark [class*="bg-brand-50/"]{background-color:rgba(26,33,56,.55)}
+    html.dark [class*="bg-brand-100/"]{background-color:rgba(35,44,71,.70)}
+    html.dark [class*="bg-rose-50/"]{background-color:rgba(42,22,34,.55)}
+    html.dark [class*="bg-rose-100/"]{background-color:rgba(58,28,44,.70)}
+    html.dark [class*="bg-amber-50/"]{background-color:rgba(42,33,19,.55)}
+    html.dark [class*="bg-emerald-50/"]{background-color:rgba(18,41,31,.55)}
+    html.dark [class*="bg-slate-50/"]{background-color:rgba(20,26,42,.60)}
+    html.dark [class*="border-slate-200/"]{border-color:rgba(40,48,68,.85)}
+    /* 具体变体（放兜底之后，保证优先于上面的通配） */
+    html.dark .bg-slate-50\/60{background-color:rgba(20,26,42,.55)}
+    html.dark .bg-slate-50\/70{background-color:rgba(20,26,42,.60)}
+    html.dark .bg-slate-50\/95{background-color:rgba(11,15,26,.92)}
+    html.dark .bg-brand-50\/50{background-color:rgba(26,33,56,.50)}
+    html.dark .bg-rose-50\/50{background-color:rgba(42,22,34,.55)}
+    html.dark .border-slate-200\/70{border-color:rgba(40,48,68,.85)}
+    html.dark .border-slate-200\/80{border-color:rgba(40,48,68,.90)}
+    /* ===== 暗色补丁 2：遗漏的实色 ===== */
+    html.dark .bg-amber-100{background-color:#3a2f16}
+    html.dark .bg-slate-300{background-color:#36405a}
+    html.dark .bg-slate-400{background-color:#47536e}
+    html.dark .text-amber-800{color:#e5be74}
+    html.dark .text-amber-900{color:#eccd8d}
+    html.dark .text-emerald-700{color:#4ecf9a}
+    html.dark .border-brand-200{border-color:#2f3a5e}
+    html.dark .border-emerald-200{border-color:#1d4a37}
+    html.dark .border-rose-300{border-color:#6b3348}
     @media (max-width:640px){
       input,select,textarea{font-size:16px !important}
     }
@@ -61,15 +161,15 @@
         <div class="w-16 h-16 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg mb-4">
           <i data-lucide="mic" class="w-8 h-8 text-white"></i>
         </div>
-        <h2 class="text-lg font-bold text-slate-800">语音纪要</h2>
+        <h2 class="text-lg font-medium text-slate-800">语音纪要</h2>
         <p class="text-sm text-slate-400 mt-1.5">请输入访问口令以继续</p>
       </div>
       <input v-model="authInput" @keyup.enter="submitAuth" type="password" autocomplete="current-password" placeholder="访问口令"
              class="w-full px-4 py-3 text-base border rounded-xl bg-white focus:outline-none focus:border-brand-300 transition"
-             :class="authError ? 'border-rose-300' : 'border-slate-200'">
+             :class="authError ? 'border-rose-300' : 'border-slate-200/70'">
       <p v-if="authError" class="text-sm text-rose-500 mt-2">{{ authError }}</p>
       <button @click="submitAuth" :disabled="authChecking"
-              class="w-full mt-4 py-3 rounded-xl bg-brand-600 text-white font-semibold text-base active:bg-brand-700 disabled:opacity-50 transition">
+              class="w-full mt-4 py-3 rounded-xl bg-brand-600 text-white font-medium text-base active:bg-brand-700 disabled:opacity-50 transition">
         {{ authChecking ? '验证中...' : '进入' }}
       </button>
       <p class="text-xs text-slate-300 text-center mt-6">同一台设备只需输入一次</p>
@@ -82,26 +182,18 @@
     <header class="px-3 sm:px-6 py-2.5 bg-white border-b border-slate-100 shrink-0 safe-top">
       <!-- 详情页专属顶栏 (PC居中宽幅与快捷工具) -->
       <div v-if="detailId" class="flex items-center justify-between max-w-6xl xl:max-w-7xl mx-auto gap-2">
-        <button @click="closeDetail" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition shrink-0 active:scale-95" title="返回录音列表 (快捷键 Esc)">
+        <button @click="closeDetail" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition shrink-0 active:scale-95" title="返回录音列表 (快捷键 Esc)">
           <i data-lucide="arrow-left" class="w-4 h-4"></i>
           <span>返回列表</span>
         </button>
         <div class="flex items-center gap-2 min-w-0 flex-1 justify-center px-2">
           <span class="text-xs text-slate-400 hidden md:inline">纪要详情 /</span>
-          <h1 class="text-sm sm:text-base font-bold text-slate-800 truncate text-center">{{ detailData ? detailData.title : '加载中...' }}</h1>
+          <h1 class="text-sm sm:text-base font-medium text-slate-800 truncate text-center">{{ detailData ? detailData.title : '加载中...' }}</h1>
         </div>
-        <div class="flex items-center gap-1 shrink-0">
+        <div class="hidden sm:flex items-center gap-1 shrink-0">
           <button @click="retranscribeDetail" title="重新转写" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
             <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             <span class="hidden xl:inline text-xs ml-1 font-medium">重转写</span>
-          </button>
-          <button @click="exportDetail" title="导出 Markdown 纪要" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
-            <i data-lucide="file-text" class="w-4 h-4"></i>
-            <span class="hidden xl:inline text-xs ml-1 font-medium">导出纪要</span>
-          </button>
-          <button @click="downloadAudio" title="下载原声录音" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span class="hidden xl:inline text-xs ml-1 font-medium">下载录音</span>
           </button>
           <button @click="openAssignTag(detailData)" title="打标签" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
             <i data-lucide="tags" class="w-4 h-4"></i>
@@ -116,6 +208,9 @@
             <span class="hidden xl:inline text-xs ml-1 font-medium">删除</span>
           </button>
         </div>
+        <button @click="showDetailMenu = true" class="sm:hidden p-2 text-slate-500 hover:text-brand-700 rounded-lg active:bg-slate-100 shrink-0" title="更多操作">
+          <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+        </button>
       </div>
       <!-- 默认顶栏 (列表/实时语音/待办) -->
       <div v-else class="grid grid-cols-[auto_1fr_auto] items-center max-w-[880px] mx-auto gap-2">
@@ -123,15 +218,18 @@
           <button @click="goBack" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg active:bg-slate-100" title="后退"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
           <button @click="goForward" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg active:bg-slate-100" title="前进"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
         </div>
-        <h1 class="text-base font-bold text-slate-800 truncate text-center">{{ pageTitle }}</h1>
+        <h1 class="text-base font-medium text-slate-800 truncate text-center">{{ selectMode ? ('已选 ' + selectedIds.length + ' 条') : pageTitle }}</h1>
         <div class="flex items-center gap-0.5 justify-end">
-          <button v-if="activeTab==='recordings'" @click="showUpload=true" class="p-2 text-slate-500 hover:text-brand-600 rounded-lg active:bg-slate-100" title="上传音频"><i data-lucide="upload" class="w-5 h-5"></i></button>
+          <button v-if="activeTab==='recordings' && !selectMode" @click="toggleSelectMode" class="p-2 text-slate-500 hover:text-brand-600 rounded-lg active:bg-slate-100" title="批量选择"><i data-lucide="check-square" class="w-5 h-5"></i></button>
+          <button v-else-if="activeTab==='recordings' && selectMode" @click="exitSelectMode" class="px-2.5 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition" title="退出批量选择">完成</button>
+          <button v-if="activeTab==='recordings' && !selectMode" @click="showUpload=true" class="p-2 text-slate-500 hover:text-brand-600 rounded-lg active:bg-slate-100" title="上传音频"><i data-lucide="upload" class="w-5 h-5"></i></button>
+          <button @click="toggleThemeQuick" class="p-2 text-slate-500 hover:text-brand-600 rounded-lg active:bg-slate-100" :title="isDark ? '切换到浅色' : '切换到深色'"><i :data-lucide="isDark ? 'sun' : 'moon'" class="w-5 h-5"></i></button>
         </div>
       </div>
     </header>
 
     <!-- 桌面端顶部 Tab 条：与主内容对齐的 880px 居中条（仅在非详情时显示） -->
-    <nav v-if="!detailId" class="hidden sm:block bg-white border-b border-slate-200 shrink-0">
+    <nav v-if="!detailId" class="hidden sm:block bg-white border-b border-slate-200/70 shrink-0">
       <div class="max-w-[880px] mx-auto flex items-center gap-1 px-6">
         <button v-for="item in navItems" :key="item.id" @click="switchTab(item.id)"
                 :class="activeTab===item.id && !detailId ? 'text-brand-700 bg-brand-50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'"
@@ -139,13 +237,14 @@
           <i :data-lucide="item.icon" class="w-4 h-4"></i>
           <span>{{ item.name }}</span>
           <span v-if="item.id==='actions' && pendingActionCount>0"
-                class="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] leading-[18px] text-center font-bold">{{ pendingActionCount > 99 ? '99+' : pendingActionCount }}</span>
+                class="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] leading-[18px] text-center font-medium">{{ pendingActionCount > 99 ? '99+' : pendingActionCount }}</span>
         </button>
       </div>
     </nav>
 
     <!-- 页面内容 -->
-    <main ref="mainEl" class="flex-1 overflow-y-auto pb-20 sm:pb-0 overscroll-contain"
+    <main ref="mainEl" class="flex-1 overflow-y-auto overscroll-contain"
+          :class="(selectMode && !detailId && activeTab==='recordings') ? 'pb-44 sm:pb-28' : 'pb-20 sm:pb-0'"
           @touchstart="ptrTouchStart" @touchmove="ptrTouchMove" @touchend="ptrTouchEnd" @touchcancel="ptrTouchEnd">
 
       <!-- 下拉刷新指示器 -->
@@ -157,36 +256,53 @@
 
       <!-- ===== 页面1：录音列表 ===== -->
       <div v-if="activeTab==='recordings' && !detailId" class="animate-fade-in">
+        <!-- 概览条：首页视觉锚点 -->
+        <div class="px-4 sm:px-6 sm:max-w-[880px] sm:mx-auto pt-4">
+          <div class="grid grid-cols-3 gap-2 sm:gap-3">
+            <div class="bg-white border border-slate-200/70 rounded-xl px-3 py-2.5">
+              <p class="text-lg font-medium text-slate-900 leading-none">{{ recordings.length }}</p>
+              <p class="text-[11px] text-slate-400 mt-1.5">条记录</p>
+            </div>
+            <div class="bg-white border border-slate-200/70 rounded-xl px-3 py-2.5">
+              <p class="text-lg font-medium leading-none" :class="pendingActionCount>0 ? 'text-amber-600' : 'text-slate-900'">{{ pendingActionCount }}</p>
+              <p class="text-[11px] text-slate-400 mt-1.5">项待办</p>
+            </div>
+            <div class="bg-white border border-slate-200/70 rounded-xl px-3 py-2.5">
+              <p class="text-lg font-medium text-slate-900 leading-none">{{ weekCount }}</p>
+              <p class="text-[11px] text-slate-400 mt-1.5">本周新增</p>
+            </div>
+          </div>
+        </div>
         <!-- 顶部筛选区：移动端铺满，桌面端居中限宽 -->
         <div class="px-4 sm:px-6 sm:max-w-[880px] sm:mx-auto">
         <!-- 搜索 + 来源筛选 -->
         <div class="pt-3 pb-2 shrink-0 flex items-center gap-2">
           <div class="relative flex-1 min-w-0">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input v-model="searchQuery" type="text" enterkeyhint="search" placeholder="搜索纪要..." class="w-full pl-9 pr-9 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:border-brand-300 focus:outline-none transition">
+            <input v-model="searchQuery" type="text" enterkeyhint="search" placeholder="搜索标题、摘要或逐字稿..." class="w-full pl-9 pr-9 py-2.5 text-sm border border-slate-200/70 rounded-lg bg-slate-50 focus:bg-white focus:border-brand-300 focus:outline-none transition">
             <button v-if="searchQuery" @click="searchQuery=''" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x-circle" class="w-4 h-4"></i></button>
           </div>
           <div class="flex bg-slate-100 p-0.5 rounded-lg text-[11px] shrink-0">
             <button v-for="opt in [{id:'all',name:'全部'},{id:'wechat',name:'语音'},{id:'upload',name:'上传'}]" :key="opt.id"
                     @click="sourceFilter=opt.id"
-                    :class="sourceFilter===opt.id ? 'bg-white font-bold text-slate-800 shadow-sm' : 'text-slate-500'"
+                    :class="sourceFilter===opt.id ? 'bg-white font-medium text-slate-800 shadow-sm' : 'text-slate-500'"
                     class="px-2.5 py-1.5 rounded-md transition">{{ opt.name }}</button>
           </div>
         </div>
         <!-- 标签筛选 -->
         <div class="pb-2 flex gap-2 overflow-x-auto shrink-0">
-          <button @click="filterTag='all'" :class="filterTag==='all'?'bg-brand-600 text-white':'bg-white text-slate-600 border border-slate-200'" class="px-3 py-1.5 rounded-full text-xs whitespace-nowrap shrink-0 font-medium">全部 {{ recordings.length }}</button>
-          <button v-for="p in projects" :key="p.id" @click="filterTag=p.id" :class="filterTag===p.id?'bg-brand-600 text-white':'bg-white text-slate-600 border border-slate-200'" class="px-3 py-1.5 rounded-full text-xs whitespace-nowrap shrink-0 flex items-center gap-1 font-medium">
+          <button @click="filterTag='all'" :class="filterTag==='all'?'bg-brand-600 text-white':'bg-white text-slate-600 border border-slate-200/70'" class="px-3 py-1.5 rounded-full text-xs whitespace-nowrap shrink-0 font-medium">全部 {{ recordings.length }}</button>
+          <button v-for="p in projects" :key="p.id" @click="filterTag=p.id" :class="filterTag===p.id?'bg-brand-600 text-white':'bg-white text-slate-600 border border-slate-200/70'" class="px-3 py-1.5 rounded-full text-xs whitespace-nowrap shrink-0 flex items-center gap-1 font-medium">
             <span class="w-2 h-2 rounded-full shrink-0" :style="{background:tagColor(p.color)}"></span>{{ p.name }}
           </button>
           <button @click="showNewTag=true" class="px-2.5 py-1.5 rounded-full text-xs text-slate-400 border border-dashed border-slate-300 shrink-0 flex items-center gap-0.5 hover:text-brand-600 hover:border-brand-300"><i data-lucide="plus" class="w-3 h-3"></i>新标签</button>
         </div>
         <!-- 标签进度看板入口 -->
         <div v-if="activeFilterProject" class="pb-2 shrink-0">
-          <button @click="openDashboard(activeFilterProject.id)" class="w-full bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-100 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 text-left active:scale-[0.98] transition">
+          <button @click="openDashboard(activeFilterProject.id)" class="w-full bg-white border border-slate-200/70 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 text-left active:scale-[0.99] hover:border-slate-300 transition">
             <span class="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0"><i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-600"></i></span>
             <span class="flex-1 min-w-0">
-              <span class="block text-sm font-semibold text-slate-700">「{{ activeFilterProject.name }}」进度看板</span>
+              <span class="block text-sm font-medium text-slate-700">「{{ activeFilterProject.name }}」进度看板</span>
               <span class="block text-xs text-slate-400 mt-0.5">AI 自动汇总 · {{ activeFilterProject.recording_count }} 条录音 · {{ activeFilterProject.pending_action_count }} 项待办</span>
             </span>
             <i data-lucide="chevron-right" class="w-4 h-4 text-brand-400 shrink-0"></i>
@@ -196,7 +312,7 @@
         <!-- 列表（移动端：卡片） -->
         <div class="px-4 py-2 sm:hidden">
           <div v-if="loading && recordings.length===0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div v-for="i in 6" :key="i" class="bg-white rounded-xl border border-slate-200 p-3.5 animate-pulse">
+            <div v-for="i in 6" :key="i" class="bg-white rounded-xl border border-slate-200/70 p-3.5 animate-pulse">
               <div class="h-4 bg-slate-200 rounded w-3/4"></div>
               <div class="h-3 bg-slate-100 rounded w-full mt-2.5"></div>
               <div class="h-3 bg-slate-100 rounded w-2/3 mt-1.5"></div>
@@ -205,25 +321,42 @@
           </div>
           <div v-else-if="filteredRecordings.length===0" class="text-center py-20 text-slate-400">
             <i data-lucide="audio-lines" class="w-16 h-16 mx-auto mb-4 opacity-20"></i>
-            <p class="text-sm font-medium">还没有语音纪要</p>
-            <p class="text-xs mt-1.5 text-slate-400">点右上角上传音频，或去「实时语音」点按说话</p>
+            <p class="text-sm font-medium">{{ recordings.length===0 ? '还没有语音纪要' : '没有匹配的记录' }}</p>
+            <p class="text-xs mt-1.5 text-slate-400">{{ recordings.length===0 ? '上传一段音频，或直接开口说话' : '换个关键词或筛选条件试试' }}</p>
+            <div v-if="recordings.length===0" class="flex items-center justify-center gap-2 mt-5">
+              <button @click="showUpload=true" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition">
+                <i data-lucide="upload" class="w-4 h-4"></i>上传音频
+              </button>
+              <button @click="switchTab('talk')" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200/70 hover:border-slate-300 rounded-lg transition">
+                <i data-lucide="mic" class="w-4 h-4"></i>开始录音
+              </button>
+            </div>
           </div>
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div v-for="r in filteredRecordings" :key="r.id"
                  @click="onCardClick(r)"
                  @touchstart="cardPressStart(r)" @touchend="cardPressEnd" @touchmove="cardPressCancel"
                  @contextmenu.prevent="openSheetFromContext(r)"
-                 class="bg-white rounded-xl border border-slate-200 p-3.5 cursor-pointer hover:border-brand-300 hover:shadow-card transition active:scale-[0.98] select-none">
+                 class="bg-white rounded-xl border border-slate-200/70 p-3.5 cursor-pointer hover:border-slate-300 hover:bg-slate-50/60 transition active:scale-[0.99] select-none"
+                 :class="selectedIds.includes(r.id) ? 'border-brand-300 ring-2 ring-brand-500/30' : ''">
               <div class="flex items-start justify-between gap-2">
-                <h3 class="font-semibold text-slate-800 text-base leading-snug line-clamp-2 flex-1">{{ r.title }}</h3>
+                <span v-if="selectMode" class="w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition"
+                      :class="selectedIds.includes(r.id) ? 'bg-brand-600 border-brand-600' : 'border-slate-300'">
+                  <i v-if="selectedIds.includes(r.id)" data-lucide="check" class="w-3 h-3 text-white"></i>
+                </span>
+                <h3 class="font-medium text-slate-800 text-base leading-snug line-clamp-2 flex-1">{{ r.title }}</h3>
                 <div class="flex items-center gap-1 shrink-0">
-                  <button @click.stop="startRename(r)" class="p-1.5 -m-1.5 text-slate-300 hover:text-brand-600 rounded-lg" title="重命名"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                  <button v-if="!selectMode" @click.stop="startRename(r)" class="p-1.5 -m-1.5 text-slate-300 hover:text-brand-600 rounded-lg" title="重命名"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
                   <span v-if="isProcessing(r)" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">处理中</span>
                   <span v-else-if="r.status==='failed'" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">失败</span>
                 </div>
               </div>
               <p v-if="r.summary_preview" class="text-sm text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{{ r.summary_preview }}</p>
               <p v-else class="text-sm text-slate-400 mt-1.5 italic">{{ r.status_message || '等待处理...' }}</p>
+              <div v-if="r._hit && r._hit.snippet" class="mt-2 flex items-start gap-1.5 bg-slate-50 rounded-lg px-2.5 py-2">
+                <i data-lucide="search" class="w-3 h-3 mt-0.5 shrink-0 text-slate-400"></i>
+                <span class="text-xs text-slate-500 leading-relaxed line-clamp-2">{{ r._hit.snippet }}</span>
+              </div>
               <div v-if="isProcessing(r)" class="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
                 <div class="h-full bg-amber-400 transition-all duration-500" :style="{width:(r.progress||0)+'%'}"></div>
               </div>
@@ -248,31 +381,48 @@
           </div>
           <div v-else-if="desktopGroups.length===0" class="text-center py-24 text-slate-400">
             <i data-lucide="audio-lines" class="w-14 h-14 mx-auto mb-4 opacity-20"></i>
-            <p class="text-sm font-medium">还没有语音纪要</p>
-            <p class="text-xs mt-1.5 text-slate-400">点右上角上传音频，或去「实时语音」点按说话</p>
+            <p class="text-sm font-medium">{{ recordings.length===0 ? '还没有语音纪要' : '没有匹配的记录' }}</p>
+            <p class="text-xs mt-1.5 text-slate-400">{{ recordings.length===0 ? '上传一段音频，或直接开口说话' : '换个关键词或筛选条件试试' }}</p>
+            <div v-if="recordings.length===0" class="flex items-center justify-center gap-2 mt-5">
+              <button @click="showUpload=true" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition">
+                <i data-lucide="upload" class="w-4 h-4"></i>上传音频
+              </button>
+              <button @click="switchTab('talk')" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200/70 hover:border-slate-300 rounded-lg transition">
+                <i data-lucide="mic" class="w-4 h-4"></i>开始录音
+              </button>
+            </div>
           </div>
           <div v-else>
             <section v-for="g in desktopGroups" :key="g.key">
               <div class="sticky top-0 z-10 -mx-6 px-6 py-2.5 bg-slate-50/95 backdrop-blur flex items-baseline gap-2">
-                <h2 class="text-sm font-semibold text-slate-700">{{ g.label }}</h2>
+                <h2 class="text-sm font-medium text-slate-700">{{ g.label }}</h2>
                 <span class="text-xs text-slate-400">{{ g.dateStr }} · {{ g.items.length }} 条</span>
               </div>
               <div class="relative pl-6">
                 <span class="absolute left-2 top-2 bottom-2 w-px bg-slate-200"></span>
                 <article v-for="r in g.items" :key="r.id"
                          @click="onCardClick(r)" @contextmenu.prevent="openSheetFromContext(r)"
-                         class="group relative pl-3 pr-2 py-4 cursor-pointer border-b border-slate-100 last:border-0">
-                  <span class="absolute left-[5px] top-[22px] w-[7px] h-[7px] rounded-full ring-2 ring-slate-50" :style="{background: recDot(r)}"></span>
+                         class="group relative pl-3 pr-2 py-4 cursor-pointer border-b border-slate-100 last:border-0 transition-colors"
+                         :class="selectedIds.includes(r.id) ? 'bg-brand-50/60' : ''">
+                  <span v-if="!selectMode" class="absolute left-[5px] top-[22px] w-[7px] h-[7px] rounded-full ring-2 ring-slate-50" :style="{background: recDot(r)}"></span>
                   <span class="absolute left-0 top-2 bottom-2 w-0.5 rounded-full opacity-0 group-hover:opacity-25 transition-opacity" :style="{background: recDot(r)}"></span>
                   <div class="flex items-baseline gap-2">
-                    <h3 class="text-base font-semibold text-slate-800 group-hover:text-brand-700 leading-snug line-clamp-1 flex-1">{{ r.title }}</h3>
-                    <button @click.stop="startRename(r)" class="shrink-0 p-1.5 -m-1.5 text-slate-300 hover:text-brand-600 rounded-lg opacity-0 group-hover:opacity-100 transition" title="重命名"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                    <span v-if="selectMode" class="shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center -mb-0.5 transition"
+                          :class="selectedIds.includes(r.id) ? 'bg-brand-600 border-brand-600' : 'border-slate-300'">
+                      <i v-if="selectedIds.includes(r.id)" data-lucide="check" class="w-2.5 h-2.5 text-white"></i>
+                    </span>
+                    <h3 class="text-base font-medium text-slate-800 group-hover:text-brand-700 leading-snug line-clamp-1 flex-1">{{ r.title }}</h3>
+                    <button v-if="!selectMode" @click.stop="startRename(r)" class="shrink-0 p-1.5 -m-1.5 text-slate-300 hover:text-brand-600 rounded-lg opacity-0 group-hover:opacity-100 transition" title="重命名"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
                     <span v-if="isProcessing(r)" class="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">处理中</span>
                     <span v-else-if="r.status==='failed'" class="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">失败</span>
                     <span class="shrink-0 text-xs text-slate-400">{{ r.source_type==='wechat'?'语音':'上传' }}</span>
                   </div>
                   <p v-if="r.summary_preview" class="text-sm text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{{ r.summary_preview }}</p>
                   <p v-else class="text-sm text-slate-400 mt-1.5 italic">{{ r.status_message || '等待处理...' }}</p>
+                  <div v-if="r._hit && r._hit.snippet" class="mt-2 flex items-start gap-1.5 bg-slate-50 rounded-lg px-2.5 py-2">
+                    <i data-lucide="search" class="w-3 h-3 mt-0.5 shrink-0 text-slate-400"></i>
+                    <span class="text-xs text-slate-500 leading-relaxed line-clamp-2">{{ r._hit.snippet }}</span>
+                  </div>
                   <div v-if="isProcessing(r)" class="mt-2 h-1 w-52 bg-slate-100 rounded-full overflow-hidden">
                     <div class="h-full bg-amber-400 transition-all duration-500" :style="{width:(r.progress||0)+'%'}"></div>
                   </div>
@@ -302,21 +452,21 @@
           <div v-if="!isSecure" class="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
             <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
             <div>
-              <span class="font-bold block">无法录音：当前不是 HTTPS 安全访问</span>
+              <span class="font-medium block">无法录音：当前不是 HTTPS 安全访问</span>
               <span class="text-amber-800 leading-relaxed">浏览器安全策略禁止在非加密页面使用麦克风，请改用 HTTPS 入口访问本系统。</span>
             </div>
           </div>
           <!-- 语音识别异常常驻提示 -->
           <div v-if="lastAsrError" class="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900">
-            <div class="flex items-center justify-between font-bold">
+            <div class="flex items-center justify-between font-medium">
               <span class="flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i>语音识别提示</span>
               <button @click="lastAsrError=''" class="p-1 text-amber-500 hover:text-amber-700 rounded"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
             </div>
             <p class="mt-1 leading-relaxed text-amber-800 break-all">{{ lastAsrError }}</p>
           </div>
-          <div class="p-4 border border-slate-200 rounded-xl bg-white">
+          <div class="p-4 border border-slate-200/70 rounded-xl bg-white">
             <label class="text-xs text-slate-500 font-medium">归属标签（可选）</label>
-            <select v-model="talkProjectId" class="mt-1.5 w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 bg-white focus:border-brand-300 focus:outline-none">
+            <select v-model="talkProjectId" class="mt-1.5 w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2.5 bg-white focus:border-brand-300 focus:outline-none">
               <option value="">不归类</option>
               <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
             </select>
@@ -362,7 +512,7 @@
               <i v-else data-lucide="mic" class="w-8 h-8"></i>
               <span class="text-[10px] mt-0.5 font-medium">{{ isRecording ? '点按结束' : '点按说话' }}</span>
             </button>
-            <button v-if="talkSessionId && !isRecording" @click="finalizeTalk" class="w-16 text-brand-600 text-xs font-semibold py-2.5 hover:bg-brand-50 rounded-lg transition">结束会话</button>
+            <button v-if="talkSessionId && !isRecording" @click="finalizeTalk" class="w-16 text-brand-600 text-xs font-medium py-2.5 hover:bg-brand-50 rounded-lg transition">结束会话</button>
             <span v-else class="w-16"></span>
           </div>
         </div>
@@ -372,8 +522,8 @@
       <div v-if="activeTab==='actions' && !detailId" class="animate-fade-in">
         <div class="px-4 pt-4 sm:px-6 sm:max-w-[880px] sm:mx-auto">
           <div class="flex gap-2 mb-4">
-            <button @click="actionFilter='pending'" :class="actionFilter==='pending'?'bg-brand-600 text-white border-brand-600':'bg-white text-slate-600 border-slate-200'" class="px-3 py-1.5 rounded-lg text-sm border font-medium transition">未完成 {{ pendingActionCount }}</button>
-            <button @click="actionFilter='completed'" :class="actionFilter==='completed'?'bg-brand-600 text-white border-brand-600':'bg-white text-slate-600 border-slate-200'" class="px-3 py-1.5 rounded-lg text-sm border font-medium transition">已完成</button>
+            <button @click="actionFilter='pending'" :class="actionFilter==='pending'?'bg-brand-600 text-white border-brand-600':'bg-white text-slate-600 border-slate-200/70'" class="px-3 py-1.5 rounded-lg text-sm border font-medium transition">未完成 {{ pendingActionCount }}</button>
+            <button @click="actionFilter='completed'" :class="actionFilter==='completed'?'bg-brand-600 text-white border-brand-600':'bg-white text-slate-600 border-slate-200/70'" class="px-3 py-1.5 rounded-lg text-sm border font-medium transition">已完成</button>
           </div>
         </div>
         <div class="px-4 pb-4 sm:px-6 sm:max-w-[880px] sm:mx-auto space-y-2">
@@ -381,7 +531,7 @@
             <i data-lucide="check-circle-2" class="w-14 h-14 mx-auto mb-3 opacity-20"></i>
             <p class="text-sm font-medium">{{ actionFilter==='pending' ? '太棒了，没有待办' : '还没有已完成的待办' }}</p>
           </div>
-          <div v-for="a in filteredActions" :key="a.id" class="bg-white rounded-xl border border-slate-200 p-3 flex items-start gap-3 hover:shadow-card transition">
+          <div v-for="a in filteredActions" :key="a.id" class="bg-white rounded-xl border border-slate-200/70 p-3 flex items-start gap-3 hover:shadow-card transition">
             <button @click="toggleGlobalAction(a)" class="mt-0.5 shrink-0 p-2 -m-2">
               <i :data-lucide="a.status==='completed'?'check-square':'square'" :class="a.status==='completed'?'text-emerald-500':'text-slate-300 hover:text-slate-400'" class="w-5 h-5"></i>
             </button>
@@ -413,7 +563,7 @@
             <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 group">
-                  <h2 class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug break-words">{{ detailData.title }}</h2>
+                  <h2 class="text-xl sm:text-2xl font-medium text-slate-800 leading-snug break-words">{{ detailData.title }}</h2>
                   <button @click="startRename(detailData)" class="p-1.5 text-slate-300 hover:text-brand-600 rounded-lg opacity-0 group-hover:opacity-100 transition shrink-0" title="重命名">
                     <i data-lucide="pencil" class="w-4 h-4"></i>
                   </button>
@@ -428,8 +578,8 @@
                     <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
                     {{ detailData.created_at }}
                   </span>
-                  <span :class="detailData.source_type==='wechat'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-slate-100 text-slate-600 border-slate-200'" class="px-2 py-0.5 rounded-md font-medium border">
-                    {{ detailData.source_type==='wechat'?'微信语音':'手动上传' }}
+                  <span :class="detailData.source_type==='wechat'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-slate-100 text-slate-600 border-slate-200/70'" class="px-2 py-0.5 rounded-md font-medium border">
+                    {{ detailData.source_type==='wechat'?'实时语音':'手动上传' }}
                   </span>
                   <span v-for="lp in detailData.linked_projects" :key="lp.id" class="px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 font-medium border border-brand-100">
                     {{ lp.name }}
@@ -442,15 +592,15 @@
 
               <!-- 右侧快捷按钮（大屏显示辅助动作） -->
               <div class="flex items-center gap-2 shrink-0">
-                <button @click="exportDetail" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 rounded-lg transition">
+                <button @click="exportDetail" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200/70 hover:border-brand-200 rounded-lg transition">
                   <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
                   <span>导出纪要</span>
                 </button>
-                <button @click="downloadAudio" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 rounded-lg transition">
+                <button @click="downloadAudio" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200/70 hover:border-brand-200 rounded-lg transition">
                   <i data-lucide="download" class="w-3.5 h-3.5"></i>
                   <span>下载录音</span>
                 </button>
-                <button @click="copyTranscript" v-if="detailData.polished_segments && detailData.polished_segments.length" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 rounded-lg transition">
+                <button @click="copyTranscript" v-if="detailData.polished_segments && detailData.polished_segments.length" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200/70 hover:border-brand-200 rounded-lg transition">
                   <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                   <span>复制逐字稿</span>
                 </button>
@@ -461,7 +611,7 @@
             <div v-if="isProcessing(detailData)" class="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
               <div class="flex items-center justify-between text-xs text-amber-800 mb-2">
                 <span class="font-medium flex items-center gap-1.5"><i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>{{ detailData.status_message || '正在智能处理中...' }}</span>
-                <span class="font-bold font-mono">{{ detailData.progress }}%</span>
+                <span class="font-medium font-mono">{{ detailData.progress }}%</span>
               </div>
               <div class="h-2 bg-amber-100 rounded-full overflow-hidden">
                 <div class="h-full bg-amber-500 rounded-full transition-all duration-500" :style="{width:detailData.progress+'%'}"></div>
@@ -476,13 +626,9 @@
                 </div>
                 <!-- 下载音频 + 倍速切换 -->
                 <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                  <button @click="downloadAudio" class="px-2.5 py-1 text-xs text-slate-600 hover:text-brand-600 hover:bg-brand-50 bg-white border border-slate-200 rounded-md transition flex items-center gap-1 shadow-xs" title="下载原声录音">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span>下载录音</span>
-                  </button>
-                  <span class="text-xs text-slate-400 ml-1 hidden sm:inline">倍速:</span>
+                  <span class="text-xs text-slate-400 hidden sm:inline">倍速:</span>
                   <button v-for="rate in [0.75, 1.0, 1.25, 1.5, 2.0]" :key="rate" @click="setPlaybackRate(rate)"
-                          :class="playbackRate===rate ? 'bg-brand-600 text-white font-bold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                          :class="playbackRate===rate ? 'bg-brand-600 text-white font-medium shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70'"
                           class="px-2 py-1 text-xs rounded-md transition font-mono">{{ rate }}x</button>
                 </div>
               </div>
@@ -490,21 +636,21 @@
           </div>
 
           <!-- 2. PC视图模式切换 & 移动端 Tab 切换 -->
-          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <div class="flex items-center justify-between border-b border-slate-200/70 pb-2">
             <!-- 桌面端视图切换 (>= 1024px) -->
             <div class="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl gap-1">
               <button @click="desktopDetailMode='summary'"
-                      :class="desktopDetailMode==='summary'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'"
+                      :class="desktopDetailMode==='summary'?'bg-white text-brand-700 font-medium shadow-sm':'text-slate-600 hover:text-slate-800'"
                       class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>智能纪要 (主要内容)
               </button>
               <button @click="desktopDetailMode='actions'"
-                      :class="desktopDetailMode==='actions'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'"
+                      :class="desktopDetailMode==='actions'?'bg-white text-brand-700 font-medium shadow-sm':'text-slate-600 hover:text-slate-800'"
                       class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                 <i data-lucide="check-square" class="w-3.5 h-3.5"></i>待办与决议
               </button>
               <button @click="desktopDetailMode='transcript'"
-                      :class="desktopDetailMode==='transcript'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'"
+                      :class="desktopDetailMode==='transcript'?'bg-white text-brand-700 font-medium shadow-sm':'text-slate-600 hover:text-slate-800'"
                       class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                 <i data-lucide="align-left" class="w-3.5 h-3.5"></i>逐字稿全文
               </button>
@@ -513,7 +659,7 @@
             <!-- 侧栏逐字稿折叠/展开开关（仅在智能纪要模式下展示） -->
             <div class="hidden lg:flex items-center gap-2" v-if="desktopDetailMode==='summary'">
               <button @click="showSideTranscript = !showSideTranscript"
-                      :class="showSideTranscript ? 'bg-brand-50 text-brand-700 border-brand-200 shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
+                      :class="showSideTranscript ? 'bg-brand-50 text-brand-700 border-brand-200 shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200/70'"
                       class="px-3 py-1.5 text-xs font-medium border rounded-lg transition flex items-center gap-1.5 hover:border-brand-300">
                 <i :data-lucide="showSideTranscript ? 'panel-right-close' : 'panel-right-open'" class="w-3.5 h-3.5"></i>
                 <span>{{ showSideTranscript ? '收起侧栏逐字稿' : '展开侧栏逐字稿 (' + ((detailData.polished_segments||[]).length) + '句)' }}</span>
@@ -523,7 +669,7 @@
             <!-- 移动端与平板 Tab 切换 (< 1024px) -->
             <div class="flex lg:hidden gap-1 overflow-x-auto w-full">
               <button v-for="t in detailTabs" :key="t.id" @click="detailTab=t.id"
-                      :class="detailTab===t.id?'text-brand-600 border-b-2 border-brand-600 font-bold':'text-slate-500'"
+                      :class="detailTab===t.id?'text-brand-600 border-b-2 border-brand-600 font-medium':'text-slate-500'"
                       class="px-3 py-2 text-sm transition-colors whitespace-nowrap shrink-0">{{ t.name }}</button>
             </div>
 
@@ -539,7 +685,7 @@
             <div class="flex-1 min-w-0 space-y-6">
               <!-- 会议摘要 -->
               <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm">
-                <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <h3 class="text-base font-medium text-slate-800 mb-3 flex items-center gap-2">
                   <i data-lucide="sparkles" class="w-4 h-4 text-brand-500"></i>会议摘要
                 </h3>
                 <p v-if="detailData.insight && detailData.insight.executive_summary" class="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50/70 p-4 sm:p-5 rounded-xl border border-slate-100 font-normal">
@@ -550,16 +696,16 @@
 
               <!-- 讨论主题 -->
               <div v-if="detailData.insight && detailData.insight.topics && detailData.insight.topics.length" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 class="text-base font-bold text-slate-800 flex items-center justify-between">
+                <h3 class="text-base font-medium text-slate-800 flex items-center justify-between">
                   <span class="flex items-center gap-2"><i data-lucide="hash" class="w-4 h-4 text-brand-500"></i>讨论主题</span>
                   <span class="text-xs font-normal text-slate-400">{{ detailData.insight.topics.length }} 个议题</span>
                 </h3>
                 <div class="space-y-3">
-                  <div v-for="(t,i) in detailData.insight.topics" :key="i" class="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition">
+                  <div v-for="(t,i) in detailData.insight.topics" :key="i" class="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200/70 transition">
                     <p v-if="typeof t==='string'" class="text-sm sm:text-base text-slate-700 leading-relaxed">{{ t }}</p>
                     <template v-else>
-                      <p class="text-sm sm:text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-md bg-brand-100 text-brand-700 text-xs flex items-center justify-center font-bold shrink-0">{{ i+1 }}</span>
+                      <p class="text-sm sm:text-base font-medium text-slate-800 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-md bg-brand-100 text-brand-700 text-xs flex items-center justify-center font-medium shrink-0">{{ i+1 }}</span>
                         {{ t.title || t.topic || t.name || ('主题 ' + (i+1)) }}
                       </p>
                       <p v-if="t.summary" class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">{{ t.summary }}</p>
@@ -575,7 +721,7 @@
 
               <!-- 待办任务 -->
               <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 class="text-base font-bold text-slate-800 flex items-center justify-between">
+                <h3 class="text-base font-medium text-slate-800 flex items-center justify-between">
                   <span class="flex items-center gap-2"><i data-lucide="check-square" class="w-4 h-4 text-brand-500"></i>待办事项</span>
                   <span v-if="detailData.insight && detailData.insight.action_items" class="text-xs font-normal text-slate-400">{{ detailData.insight.action_items.length }} 项</span>
                 </h3>
@@ -600,7 +746,7 @@
               <div v-if="detailData.insight && ((detailData.insight.decisions && detailData.insight.decisions.length) || (detailData.insight.risks && detailData.insight.risks.length))" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-4">
                 <!-- 决议 -->
                 <div v-if="detailData.insight.decisions && detailData.insight.decisions.length">
-                  <h4 class="text-sm sm:text-base font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="award" class="w-4 h-4 text-emerald-500"></i>核心决议</h4>
+                  <h4 class="text-sm sm:text-base font-medium text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="award" class="w-4 h-4 text-emerald-500"></i>核心决议</h4>
                   <div class="space-y-2">
                     <div v-for="(d,i) in detailData.insight.decisions" :key="i" class="p-3 bg-brand-50/50 rounded-xl border border-brand-100 text-sm text-slate-700 leading-relaxed">
                       {{ typeof d==='string'?d:(d.decision||d.content||JSON.stringify(d)) }}
@@ -609,11 +755,11 @@
                 </div>
                 <!-- 风险提示 -->
                 <div v-if="detailData.insight.risks && detailData.insight.risks.length">
-                  <h4 class="text-sm sm:text-base font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>风险提示</h4>
+                  <h4 class="text-sm sm:text-base font-medium text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>风险提示</h4>
                   <div class="space-y-2">
                     <div v-for="(r,i) in detailData.insight.risks" :key="i" class="p-3 bg-rose-50/50 rounded-xl border border-rose-100 text-xs sm:text-sm">
                       <p class="text-rose-700 leading-relaxed font-medium">{{ typeof r==='string'?r:(r.risk||r.description) }}</p>
-                      <p v-if="r.suggestion" class="text-slate-600 mt-1 leading-relaxed"><span class="font-semibold text-emerald-600">应对建议:</span> {{ r.suggestion }}</p>
+                      <p v-if="r.suggestion" class="text-slate-600 mt-1 leading-relaxed"><span class="font-medium text-emerald-600">应对建议:</span> {{ r.suggestion }}</p>
                     </div>
                   </div>
                 </div>
@@ -627,12 +773,12 @@
                       <i data-lucide="align-left" class="w-4 h-4"></i>
                     </span>
                     <div>
-                      <h4 class="text-sm sm:text-base font-bold text-slate-800">逐字稿记录全文</h4>
+                      <h4 class="text-sm sm:text-base font-medium text-slate-800">逐字稿记录全文</h4>
                       <p class="text-xs text-slate-400 mt-0.5">共 {{ detailData.polished_segments.length }} 句完整发言 · 点击展开核对原声与搜索</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg">
+                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg">
                       {{ transcriptExpandedBottom ? '收起逐字稿' : '点击展开逐字稿' }}
                     </span>
                     <i :data-lucide="transcriptExpandedBottom ? 'chevron-up' : 'chevron-down'" class="w-4 h-4 text-slate-400"></i>
@@ -644,10 +790,10 @@
                   <div class="flex items-center justify-between gap-3">
                     <div class="relative flex-1 max-w-sm">
                       <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                      <input v-model="transcriptSearch" type="text" placeholder="在逐字稿中搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
+                      <input v-model="transcriptSearch" type="text" placeholder="在逐字稿中搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200/70 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
                       <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
                     </div>
-                    <button @click="copyTranscript" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 rounded-lg transition">
+                    <button @click="copyTranscript" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200/70 rounded-lg transition">
                       <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                       <span>复制全文</span>
                     </button>
@@ -660,7 +806,7 @@
                          :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-xl':'hover:bg-slate-50 rounded-xl'"
                          class="p-3 cursor-pointer transition border border-transparent">
                       <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-                        <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
+                        <span class="font-medium text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
                         <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
                       </div>
                       <p class="text-sm text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
@@ -674,7 +820,7 @@
             <div v-if="showSideTranscript" class="hidden lg:flex w-80 xl:w-96 shrink-0 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex-col sticky top-4 max-h-[calc(100vh-160px)] animate-slide-in">
               <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-100 shrink-0">
                 <div class="flex items-center gap-1.5">
-                  <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1"><i data-lucide="align-left" class="w-3.5 h-3.5 text-brand-500"></i>侧栏逐字稿</h4>
+                  <h4 class="text-sm font-medium text-slate-800 flex items-center gap-1"><i data-lucide="align-left" class="w-3.5 h-3.5 text-brand-500"></i>侧栏逐字稿</h4>
                   <span class="text-[11px] text-slate-400 font-mono">({{ filteredSegments.length }}句)</span>
                 </div>
                 <div class="flex items-center gap-1">
@@ -685,7 +831,7 @@
               <div class="pt-2 pb-2 shrink-0">
                 <div class="relative w-full">
                   <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                  <input v-model="transcriptSearch" type="text" placeholder="搜索内容..." class="w-full pl-8 pr-7 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
+                  <input v-model="transcriptSearch" type="text" placeholder="搜索内容..." class="w-full pl-8 pr-7 py-1 text-xs border border-slate-200/70 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
                   <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
                 </div>
               </div>
@@ -696,7 +842,7 @@
                      :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-lg':'hover:bg-slate-50 rounded-lg'"
                      class="p-2.5 cursor-pointer transition border border-transparent">
                   <div class="flex items-center justify-between text-[11px] text-slate-400 mb-0.5">
-                    <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
+                    <span class="font-medium text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
                     <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2 h-2 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
                   </div>
                   <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
@@ -709,13 +855,13 @@
           <div v-if="desktopDetailMode==='transcript' || detailTab==='transcript'" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
             <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div class="flex items-center gap-2">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="align-left" class="w-4 h-4 text-brand-500"></i>逐字稿全文</h3>
+                <h3 class="text-base font-medium text-slate-800 flex items-center gap-1.5"><i data-lucide="align-left" class="w-4 h-4 text-brand-500"></i>逐字稿全文</h3>
                 <span class="text-xs text-slate-400 font-mono">({{ filteredSegments.length }} 句)</span>
               </div>
               <div class="flex items-center gap-2 flex-1 max-w-xs">
                 <div class="relative w-full">
                   <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                  <input v-model="transcriptSearch" type="text" placeholder="搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
+                  <input v-model="transcriptSearch" type="text" placeholder="搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200/70 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
                   <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
                 </div>
               </div>
@@ -730,7 +876,7 @@
                    :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-xl':'hover:bg-slate-50 rounded-xl'"
                    class="p-3 cursor-pointer transition border border-transparent">
                 <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-                  <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
+                  <span class="font-medium text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
                   <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
                 </div>
                 <p class="text-sm sm:text-base text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
@@ -742,7 +888,7 @@
           <div v-if="desktopDetailMode==='actions' || detailTab==='actions' || detailTab==='decisions'" class="space-y-5">
             <!-- 待办清单 -->
             <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i data-lucide="check-square" class="w-4 h-4 text-brand-500"></i>待办清单</h3>
+              <h3 class="text-base font-medium text-slate-800 flex items-center gap-2"><i data-lucide="check-square" class="w-4 h-4 text-brand-500"></i>待办清单</h3>
               <div v-if="!detailData.insight || !detailData.insight.action_items || !detailData.insight.action_items.length" class="text-sm text-slate-400 text-center py-8">无待办事项</div>
               <div v-else class="space-y-2">
                 <div v-for="(item,i) in detailData.insight.action_items" :key="i" class="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition border border-slate-100">
@@ -762,7 +908,7 @@
 
             <!-- 关键决议 -->
             <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i data-lucide="award" class="w-4 h-4 text-brand-500"></i>关键决议</h3>
+              <h3 class="text-base font-medium text-slate-800 flex items-center gap-2"><i data-lucide="award" class="w-4 h-4 text-brand-500"></i>关键决议</h3>
               <div v-if="!detailData.insight || !detailData.insight.decisions || !detailData.insight.decisions.length" class="text-sm text-slate-400 text-center py-8">无决议记录</div>
               <div v-else class="space-y-2">
                 <div v-for="(d,i) in detailData.insight.decisions" :key="i" class="p-3.5 bg-brand-50/60 rounded-xl border border-brand-100 text-sm sm:text-base text-slate-700 leading-relaxed">
@@ -776,10 +922,29 @@
     </main>
   </div>
 
+  <!-- ===== 批量操作条 ===== -->
+  <div v-if="selectMode && !detailId && activeTab==='recordings'" class="fixed left-0 right-0 bottom-16 sm:bottom-0 z-40 px-3 sm:px-6 pb-3">
+    <div class="max-w-[880px] mx-auto bg-white border border-slate-200/70 rounded-2xl shadow-lg px-3 py-2.5 flex items-center gap-2">
+      <button @click="toggleSelectAll" class="px-2.5 py-2 text-xs font-medium rounded-lg transition shrink-0"
+              :class="allFilteredSelected ? 'text-slate-500 bg-slate-100' : 'text-brand-600 bg-brand-50'">
+        {{ allFilteredSelected ? '取消全选' : '全选' }}
+      </button>
+      <span class="text-sm text-slate-500 flex-1 min-w-0 truncate">已选 <span class="font-medium text-slate-800">{{ selectedIds.length }}</span> 条</span>
+      <button @click="openBatchTag" :disabled="selectedIds.length===0"
+              class="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0">
+        <i data-lucide="tags" class="w-3.5 h-3.5"></i>打标签
+      </button>
+      <button @click="batchDelete" :disabled="selectedIds.length===0"
+              class="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>删除
+      </button>
+    </div>
+  </div>
+
   <!-- ===== 导航：仅移动端底部（仅在非详情时显示） ===== -->
   <nav v-if="!detailId" class="fixed bottom-0 left-0 right-0 sm:hidden
               flex items-center justify-around
-              bg-white border-t border-slate-200
+              bg-white border-t border-slate-200/70
               z-30 safe-bottom shadow-nav">
     <button v-for="item in navItems" :key="item.id" @click="switchTab(item.id)"
             :class="activeTab===item.id && !detailId ? 'text-brand-600 bg-brand-50' : 'text-slate-400 hover:text-slate-600'"
@@ -787,16 +952,45 @@
       <i :data-lucide="item.icon" class="w-5 h-5"></i>
       <span class="text-[10px] mt-0.5 font-medium">{{ item.name }}</span>
       <span v-if="item.id==='actions' && pendingActionCount>0"
-            class="absolute top-1 right-[18%] min-w-[16px] h-4 px-0.5 rounded-full bg-rose-500 text-white text-[10px] leading-4 text-center font-bold">{{ pendingActionCount > 99 ? '99+' : pendingActionCount }}</span>
+            class="absolute top-1 right-[18%] min-w-[16px] h-4 px-0.5 rounded-full bg-rose-500 text-white text-[10px] leading-4 text-center font-medium">{{ pendingActionCount > 99 ? '99+' : pendingActionCount }}</span>
     </button>
   </nav>
+
+  <!-- ===== 移动端详情操作菜单 ===== -->
+  <div v-if="showDetailMenu" @click.self="showDetailMenu=false" class="fixed inset-0 bg-black/40 z-[55] flex items-end sm:hidden animate-fade-in">
+    <div class="bg-white w-full rounded-t-2xl p-2 safe-bottom animate-sheet-up">
+      <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+        <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
+        <p class="text-sm font-medium text-slate-700 truncate">{{ detailData ? detailData.title : '' }}</p>
+      </div>
+      <button @click="showDetailMenu=false; startRename(detailData)" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
+        <i data-lucide="pencil" class="w-5 h-5 text-slate-400"></i>重命名
+      </button>
+      <button @click="showDetailMenu=false; openAssignTag(detailData)" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
+        <i data-lucide="tags" class="w-5 h-5 text-slate-400"></i>设置标签
+      </button>
+      <button @click="showDetailMenu=false; exportDetail()" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
+        <i data-lucide="file-text" class="w-5 h-5 text-slate-400"></i>导出 Markdown 纪要
+      </button>
+      <button @click="showDetailMenu=false; downloadAudio()" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
+        <i data-lucide="download" class="w-5 h-5 text-slate-400"></i>下载原声录音
+      </button>
+      <button @click="showDetailMenu=false; retranscribeDetail()" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
+        <i data-lucide="refresh-cw" class="w-5 h-5 text-slate-400"></i>重新转写
+      </button>
+      <button @click="showDetailMenu=false; deleteDetail()" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded-lg transition">
+        <i data-lucide="trash-2" class="w-5 h-5 text-rose-400"></i>删除
+      </button>
+      <button @click="showDetailMenu=false" class="w-full mt-1 py-3 text-sm text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-lg font-medium transition">取消</button>
+    </div>
+  </div>
 
   <!-- ===== 卡片长按操作菜单 ===== -->
   <div v-if="actionSheet" @click.self="actionSheet=null" class="fixed inset-0 bg-black/40 z-[55] flex items-end sm:items-center justify-center animate-fade-in">
     <div class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl p-2 safe-bottom animate-sheet-up">
       <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
         <i data-lucide="audio-lines" class="w-4 h-4 text-brand-500 shrink-0"></i>
-        <p class="text-sm font-semibold text-slate-700 truncate">{{ actionSheet.title }}</p>
+        <p class="text-sm font-medium text-slate-700 truncate">{{ actionSheet.title }}</p>
       </div>
       <button @click="sheetRename" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
         <i data-lucide="pencil" class="w-5 h-5 text-slate-400"></i>重命名
@@ -820,16 +1014,16 @@
   <!-- ===== 上传模态框 ===== -->
   <div v-if="showUpload" @click.self="!uploading && (showUpload=false)" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center animate-fade-in">
     <div class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl p-5 safe-bottom animate-sheet-up">
-      <h3 class="text-base font-bold text-slate-800 mb-4">上传音频</h3>
+      <h3 class="text-base font-medium text-slate-800 mb-4">上传音频</h3>
       <div class="space-y-3">
         <div>
           <label class="text-xs text-slate-500 font-medium">音频文件</label>
-          <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.webm,.mp4,.amr,.silk,.wma,.opus" @change="onUploadFile" class="mt-1.5 w-full text-sm border border-slate-200 rounded-lg px-3 py-2 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-brand-50 file:text-brand-700">
+          <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.webm,.mp4,.amr,.silk,.wma,.opus" @change="onUploadFile" class="mt-1.5 w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-brand-50 file:text-brand-700">
           <p v-if="uploadFile" class="text-xs text-slate-500 mt-1 truncate">{{ uploadFile.name }} ({{ formatFileSize(uploadFile.size) }})</p>
         </div>
         <div>
           <label class="text-xs text-slate-500 font-medium">归属标签（可选）</label>
-          <select v-model="uploadProjectId" class="mt-1.5 w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 bg-white focus:border-brand-300 focus:outline-none">
+          <select v-model="uploadProjectId" class="mt-1.5 w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2.5 bg-white focus:border-brand-300 focus:outline-none">
             <option value="">不归类</option>
             <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
@@ -849,13 +1043,13 @@
   </div>
 
   <!-- ===== 标签进度看板 ===== -->
-  <div v-if="dashProjectId" @click.self="closeDashboard" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center animate-fade-in">
-    <div class="bg-slate-50 w-full sm:w-[520px] sm:max-h-[88vh] sm:rounded-2xl rounded-t-2xl max-h-[94dvh] flex flex-col safe-bottom animate-sheet-up overflow-hidden">
+  <div v-if="dashProjectId" @click.self="closeDashboard" class="fixed inset-0 bg-black/40 z-50 flex sm:justify-end animate-fade-in">
+    <div class="bg-slate-50 w-full sm:w-[720px] lg:w-[820px] sm:max-w-[92vw] h-full flex flex-col safe-bottom animate-drawer-in overflow-hidden sm:border-l sm:border-slate-200/70 sm:shadow-2xl">
       <!-- 头部 -->
       <div class="flex items-center gap-2.5 p-4 bg-white border-b border-slate-100 shrink-0">
         <span class="w-3 h-3 rounded-full shrink-0" :style="{background: tagColor(dashData && dashData.color)}"></span>
         <div class="flex-1 min-w-0">
-          <h3 class="text-base font-bold text-slate-800 truncate">{{ dashData ? dashData.name : '加载中...' }}</h3>
+          <h3 class="text-base font-medium text-slate-800 truncate">{{ dashData ? dashData.name : '加载中...' }}</h3>
           <p class="text-[11px] text-slate-400">进度看板 · AI 随新语音自动更新</p>
         </div>
         <button @click="refreshDashboard" :disabled="dashRefreshing" class="p-2 text-slate-400 hover:text-brand-600 rounded-lg active:bg-slate-100 disabled:opacity-40" title="让 AI 重新汇总">
@@ -866,7 +1060,7 @@
 
       <!-- 加载骨架 -->
       <div v-if="dashLoading" class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div v-for="i in 3" :key="i" class="bg-white rounded-xl border border-slate-200 p-4 animate-pulse">
+        <div v-for="i in 3" :key="i" class="bg-white rounded-xl border border-slate-200/70 p-4 animate-pulse">
           <div class="h-4 bg-slate-200 rounded w-1/3"></div>
           <div class="h-3 bg-slate-100 rounded w-full mt-3"></div>
           <div class="h-3 bg-slate-100 rounded w-2/3 mt-2"></div>
@@ -874,26 +1068,27 @@
       </div>
 
       <!-- 看板内容 -->
-      <div v-else-if="dashData" class="flex-1 overflow-y-auto p-4 space-y-3 overscroll-contain">
+      <div v-else-if="dashData" class="flex-1 overflow-y-auto p-4 sm:p-5 overscroll-contain">
+        <div class="space-y-3">
         <!-- 统计条 -->
         <div class="grid grid-cols-3 gap-2">
-          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center">
-            <p class="text-lg font-bold text-slate-800">{{ dashData.recording_count }}</p>
+          <div class="bg-white rounded-xl border border-slate-200/70 p-3 text-center">
+            <p class="text-lg font-medium text-slate-800">{{ dashData.recording_count }}</p>
             <p class="text-[11px] text-slate-400 mt-0.5">语音纪要</p>
           </div>
-          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center">
-            <p class="text-lg font-bold text-amber-600">{{ dashData.pending_action_count }}</p>
+          <div class="bg-white rounded-xl border border-slate-200/70 p-3 text-center">
+            <p class="text-lg font-medium text-amber-600">{{ dashData.pending_action_count }}</p>
             <p class="text-[11px] text-slate-400 mt-0.5">待办中</p>
           </div>
-          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center">
-            <p class="text-lg font-bold text-emerald-600">{{ dashData.completed_action_count }}</p>
+          <div class="bg-white rounded-xl border border-slate-200/70 p-3 text-center">
+            <p class="text-lg font-medium text-emerald-600">{{ dashData.completed_action_count }}</p>
             <p class="text-[11px] text-slate-400 mt-0.5">已完成</p>
           </div>
         </div>
 
         <!-- AI 总体综述 -->
-        <div v-if="dashData.overview && dashData.overview.overall" class="bg-gradient-to-br from-brand-50 to-indigo-50 border border-brand-100 rounded-xl p-4">
-          <h4 class="text-sm font-semibold text-brand-700 flex items-center gap-1.5 mb-2"><i data-lucide="sparkles" class="w-4 h-4"></i>总体进度</h4>
+        <div v-if="dashData.overview && dashData.overview.overall" class="bg-brand-50/60 border border-brand-100 rounded-xl p-4">
+          <h4 class="text-sm font-medium text-brand-700 flex items-center gap-1.5 mb-2"><i data-lucide="sparkles" class="w-4 h-4"></i>总体进度</h4>
           <p class="text-base text-slate-700 leading-relaxed">{{ dashData.overview.overall }}</p>
         </div>
         <div v-else class="bg-white border border-dashed border-slate-300 rounded-xl p-4 text-center">
@@ -901,17 +1096,20 @@
           <button @click="refreshDashboard" class="mt-2 text-sm text-brand-600 font-medium">点右上角 ↻ 立即生成</button>
         </div>
 
+        </div>
+
+        <div class="dash-cols mt-3">
         <!-- 已推进 -->
-        <div v-if="dashData.overview && dashData.overview.progress && dashData.overview.progress.length" class="bg-white rounded-xl border border-slate-200 p-4">
-          <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>已推进</h4>
+        <div v-if="dashData.overview && dashData.overview.progress && dashData.overview.progress.length" class="bg-white rounded-xl border border-slate-200/70 p-4">
+          <h4 class="text-sm font-medium text-slate-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>已推进</h4>
           <ul class="space-y-2">
             <li v-for="(p,i) in dashData.overview.progress" :key="i" class="text-sm text-slate-600 flex gap-2 leading-relaxed"><span class="text-emerald-500 shrink-0 mt-0.5">✓</span><span>{{ p }}</span></li>
           </ul>
         </div>
 
         <!-- 待推进 -->
-        <div v-if="dashData.overview && dashData.overview.pending && dashData.overview.pending.length" class="bg-white rounded-xl border border-slate-200 p-4">
-          <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="hourglass" class="w-4 h-4 text-amber-500"></i>待推进</h4>
+        <div v-if="dashData.overview && dashData.overview.pending && dashData.overview.pending.length" class="bg-white rounded-xl border border-slate-200/70 p-4">
+          <h4 class="text-sm font-medium text-slate-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="hourglass" class="w-4 h-4 text-amber-500"></i>待推进</h4>
           <ul class="space-y-2">
             <li v-for="(p,i) in dashData.overview.pending" :key="i" class="text-sm text-slate-600 flex gap-2 leading-relaxed"><span class="text-amber-500 shrink-0 mt-0.5">•</span><span>{{ p }}</span></li>
           </ul>
@@ -919,15 +1117,15 @@
 
         <!-- 风险 -->
         <div v-if="dashData.overview && dashData.overview.risks && dashData.overview.risks.length" class="bg-rose-50 rounded-xl border border-rose-100 p-4">
-          <h4 class="text-sm font-semibold text-rose-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i>风险提醒</h4>
+          <h4 class="text-sm font-medium text-rose-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i>风险提醒</h4>
           <ul class="space-y-2">
             <li v-for="(r,i) in dashData.overview.risks" :key="i" class="text-sm text-rose-600 flex gap-2 leading-relaxed"><span class="shrink-0 mt-0.5">•</span><span>{{ r }}</span></li>
           </ul>
         </div>
 
         <!-- 进展时间线 -->
-        <div v-if="dashData.timeline && dashData.timeline.length" class="bg-white rounded-xl border border-slate-200 p-4">
-          <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 mb-3"><i data-lucide="history" class="w-4 h-4 text-brand-500"></i>进展时间线</h4>
+        <div v-if="dashData.timeline && dashData.timeline.length" class="bg-white rounded-xl border border-slate-200/70 p-4">
+          <h4 class="text-sm font-medium text-slate-700 flex items-center gap-1.5 mb-3"><i data-lucide="history" class="w-4 h-4 text-brand-500"></i>进展时间线</h4>
           <div class="relative pl-5 space-y-4 before:absolute before:left-[7px] before:top-1.5 before:bottom-1.5 before:w-px before:bg-slate-200">
             <div v-for="ev in dashData.timeline" :key="ev.id" class="relative">
               <span class="absolute -left-5 top-1 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm" :class="dashEventMeta(ev.event_type).dot"></span>
@@ -945,8 +1143,8 @@
         </div>
 
         <!-- 关联录音 -->
-        <div v-if="dashData.recordings && dashData.recordings.length" class="bg-white rounded-xl border border-slate-200 p-4">
-          <h4 class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="audio-lines" class="w-4 h-4 text-slate-400"></i>关联录音（{{ dashData.recordings.length }}）</h4>
+        <div v-if="dashData.recordings && dashData.recordings.length" class="bg-white rounded-xl border border-slate-200/70 p-4">
+          <h4 class="text-sm font-medium text-slate-700 flex items-center gap-1.5 mb-2.5"><i data-lucide="audio-lines" class="w-4 h-4 text-slate-400"></i>关联录音（{{ dashData.recordings.length }}）</h4>
           <div class="space-y-1">
             <div v-for="rec in dashData.recordings" :key="rec.id" @click="closeDashboard(); openDetail(rec.id)" class="flex items-center gap-2 py-2 px-2 -mx-2 rounded-lg cursor-pointer active:bg-slate-50">
               <i :data-lucide="rec.source_type==='wechat'?'message-circle':'upload'" class="w-4 h-4 text-slate-400 shrink-0"></i>
@@ -957,6 +1155,7 @@
         </div>
 
         <p class="text-center text-[11px] text-slate-300 pb-2">每有新语音分析完成，看板会自动更新</p>
+        </div>
       </div>
     </div>
   </div>
@@ -965,10 +1164,22 @@
   <div v-if="showSettings" @click.self="showSettings=false" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center animate-fade-in">
     <div class="bg-white w-full sm:w-[480px] sm:max-h-[85vh] sm:rounded-2xl rounded-t-2xl max-h-[92dvh] flex flex-col safe-bottom animate-sheet-up">
       <div class="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
-        <h3 class="text-base font-bold text-slate-800">设置</h3>
+        <h3 class="text-base font-medium text-slate-800">设置</h3>
         <button @click="showSettings=false" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div class="flex-1 overflow-y-auto p-4 space-y-3 overscroll-contain">
+        <div>
+          <label class="text-xs text-slate-500 font-medium">主题外观</label>
+          <div class="mt-1.5 grid grid-cols-3 gap-2">
+            <button v-for="t in [{id:'light',name:'浅色',icon:'sun'},{id:'dark',name:'深色',icon:'moon'},{id:'system',name:'跟随系统',icon:'laptop'}]" :key="t.id"
+                    @click="setTheme(t.id)"
+                    :class="themeMode===t.id ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-slate-200/70 text-slate-600 hover:border-slate-300'"
+                    class="flex flex-col items-center gap-1 py-2.5 rounded-lg border text-xs font-medium transition">
+              <i :data-lucide="t.icon" class="w-4 h-4"></i>{{ t.name }}
+            </button>
+          </div>
+        </div>
+        <div class="border-t border-slate-100"></div>
         <p class="text-xs text-slate-400">密钥字段显示为脱敏值，不修改直接保存不会覆盖。修改后需重启服务生效。</p>
         <div v-for="f in settingFields" :key="f.key">
           <label class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
@@ -976,8 +1187,8 @@
             {{ f.label }}
             <span v-if="f.type==='password'" class="text-[10px] font-normal" :class="settingsForm[f.key] ? 'text-emerald-600' : 'text-slate-400'">{{ settingsForm[f.key] ? '已配置' : '未配置' }}</span>
           </label>
-          <input v-if="f.type==='text'||f.type==='password'||f.type==='number'" v-model="settingsForm[f.key]" :type="f.type" class="mt-1 w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 focus:border-brand-300 focus:outline-none font-mono">
-          <select v-else-if="f.type==='select'" v-model="settingsForm[f.key]" class="mt-1 w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 bg-white focus:border-brand-300 focus:outline-none">
+          <input v-if="f.type==='text'||f.type==='password'||f.type==='number'" v-model="settingsForm[f.key]" :type="f.type" class="mt-1 w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2.5 focus:border-brand-300 focus:outline-none font-mono">
+          <select v-else-if="f.type==='select'" v-model="settingsForm[f.key]" class="mt-1 w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2.5 bg-white focus:border-brand-300 focus:outline-none">
             <option v-for="opt in f.options" :key="opt" :value="opt">{{ opt }}</option>
           </select>
         </div>
@@ -992,11 +1203,11 @@
   <!-- ===== 新建标签模态框 ===== -->
   <div v-if="showNewTag" @click.self="showNewTag=false" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center animate-fade-in">
     <div class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl p-5 safe-bottom animate-sheet-up">
-      <h3 class="text-base font-bold text-slate-800 mb-4">新建标签</h3>
+      <h3 class="text-base font-medium text-slate-800 mb-4">新建标签</h3>
       <div class="space-y-3">
         <div>
           <label class="text-xs text-slate-500 font-medium">标签名称</label>
-          <input v-model="newTagName" type="text" placeholder="如：年度总结、客户沟通" class="mt-1.5 w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 focus:border-brand-300 focus:outline-none" maxlength="20">
+          <input v-model="newTagName" type="text" placeholder="如：年度总结、客户沟通" class="mt-1.5 w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2.5 focus:border-brand-300 focus:outline-none" maxlength="20">
         </div>
         <div>
           <label class="text-xs text-slate-500 font-medium">颜色</label>
@@ -1015,7 +1226,7 @@
   <!-- ===== 打标签模态框 ===== -->
   <div v-if="showAssignTag" @click.self="showAssignTag=null" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center animate-fade-in">
     <div class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl p-5 safe-bottom animate-sheet-up">
-      <h3 class="text-base font-bold text-slate-800 mb-1">设置标签</h3>
+      <h3 class="text-base font-medium text-slate-800 mb-1">设置标签</h3>
       <p class="text-xs text-slate-400 mb-4 truncate">{{ showAssignTag.title }}</p>
       <div class="space-y-1 max-h-60 overflow-y-auto overscroll-contain">
         <label v-for="p in projects" :key="p.id" class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
@@ -1032,12 +1243,33 @@
     </div>
   </div>
 
+  <!-- ===== 批量打标签模态框 ===== -->
+  <div v-if="showBatchTag" @click.self="showBatchTag=false" class="fixed inset-0 bg-black/40 z-[60] flex items-end sm:items-center justify-center animate-fade-in">
+    <div class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl p-5 safe-bottom animate-sheet-up">
+      <h3 class="text-base font-medium text-slate-800 mb-1">批量设置标签</h3>
+      <p class="text-xs text-slate-400 mb-4">已选 {{ selectedIds.length }} 条录音 · 勾选后将覆盖各自原有标签</p>
+      <div class="space-y-1 max-h-60 overflow-y-auto overscroll-contain">
+        <label v-for="p in projects" :key="p.id" class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
+          <input type="checkbox" :value="p.id" v-model="batchTagIds" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{background:p.color||'#6366f1'}"></span>
+          <span class="text-sm text-slate-700 font-medium">{{ p.name }}</span>
+        </label>
+        <div v-if="projects.length===0" class="text-center text-sm text-slate-400 py-6">还没有标签，先去创建一个</div>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3">不勾选任何标签 = 清空已选录音的全部标签</p>
+      <div class="flex gap-2 mt-4">
+        <button @click="showBatchTag=false" class="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 rounded-lg font-medium hover:bg-slate-200 transition">取消</button>
+        <button @click="doBatchTag" :disabled="batchTagging" class="flex-1 py-2.5 text-sm text-white bg-brand-600 rounded-lg font-medium hover:bg-brand-700 transition disabled:opacity-50">{{ batchTagging ? '处理中...' : '应用' }}</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 重命名模态框 ===== -->
   <div v-if="renameRecording" @click.self="renameRecording=null" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center animate-fade-in">
     <div class="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-2xl p-5 safe-bottom animate-sheet-up">
-      <h3 class="text-base font-bold text-slate-800 mb-1">重命名语音纪要</h3>
+      <h3 class="text-base font-medium text-slate-800 mb-1">重命名语音纪要</h3>
       <p class="text-xs text-slate-400 mb-4 truncate">{{ renameRecording.title }}</p>
-      <input v-model="renameInput" type="text" maxlength="120" placeholder="输入新名称" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 focus:border-brand-300 focus:outline-none" @keyup.enter="doRename">
+      <input v-model="renameInput" type="text" maxlength="120" placeholder="输入新名称" class="w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2.5 focus:border-brand-300 focus:outline-none" @keyup.enter="doRename">
       <div class="flex gap-2 mt-5">
         <button @click="renameRecording=null" class="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 rounded-lg font-medium hover:bg-slate-200 transition">取消</button>
         <button @click="doRename" :disabled="!renameInput.trim()" class="flex-1 py-2.5 text-sm text-white bg-brand-600 rounded-lg font-medium hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed">保存</button>
@@ -1048,7 +1280,7 @@
   <!-- ===== 确认对话框 ===== -->
   <div v-if="confirmDialog" @click.self="cancelConfirm" class="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4 animate-fade-in">
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-      <h3 class="text-base font-bold text-slate-800">{{ confirmDialog.title }}</h3>
+      <h3 class="text-base font-medium text-slate-800">{{ confirmDialog.title }}</h3>
       <p class="text-sm text-slate-500 mt-2 leading-relaxed">{{ confirmDialog.message }}</p>
       <div class="flex gap-2 mt-5">
         <button @click="cancelConfirm" class="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 rounded-lg font-medium hover:bg-slate-200 transition">取消</button>
@@ -1174,6 +1406,18 @@ createApp({
       transcriptExpandedBottom: false,
       transcriptSearch: '',
       playbackRate: 1.0,
+      showDetailMenu: false,
+      contentHits: [],
+      searchDebounce: null,
+      // --- 批量操作 ---
+      selectMode: false,
+      selectedIds: [],
+      showBatchTag: false,
+      batchTagIds: [],
+      batchTagging: false,
+      // --- 主题 ---
+      themeMode: 'system',
+      systemDark: false,
     };
   },
   computed: {
@@ -1185,6 +1429,13 @@ createApp({
       if (this.filterTag === 'all') return null;
       return this.projects.find(p => p.id === this.filterTag) || null;
     },
+    weekCount() {
+      const now = Date.now();
+      return this.recordings.filter(r => {
+        const d = new Date(String(r.created_at || '').replace(/-/g, '/'));
+        return !isNaN(d.getTime()) && (now - d.getTime()) < 7 * 86400000;
+      }).length;
+    },
     filteredRecordings() {
       let list = this.recordings;
       if (this.filterTag !== 'all') {
@@ -1195,9 +1446,31 @@ createApp({
       }
       if (this.searchQuery.trim()) {
         const q = this.searchQuery.trim().toLowerCase();
-        list = list.filter(r => (r.title || '').toLowerCase().includes(q) || (r.summary_preview || '').toLowerCase().includes(q));
+        const matched = list.filter(r => (r.title || '').toLowerCase().includes(q) || (r.summary_preview || '').toLowerCase().includes(q));
+        const seen = {};
+        matched.forEach(r => { seen[r.id] = true; });
+        const extra = [];
+        (this.contentHits || []).forEach(h => {
+          if (seen[h.id]) return;
+          const rec = this.recordings.find(r => r.id === h.id);
+          if (!rec) return;
+          if (this.filterTag !== 'all' && !(rec.primary_project_id === this.filterTag || (rec.linked_projects || []).some(p => p.id === this.filterTag))) return;
+          if (this.sourceFilter !== 'all' && rec.source_type !== this.sourceFilter) return;
+          seen[h.id] = true;
+          extra.push(Object.assign({}, rec, {_hit: h}));
+        });
+        list = matched.concat(extra);
       }
       return list;
+    },
+    allFilteredSelected() {
+      const list = this.filteredRecordings;
+      return list.length > 0 && list.every(r => this.selectedIds.includes(r.id));
+    },
+    isDark() {
+      if (this.themeMode === 'dark') return true;
+      if (this.themeMode === 'light') return false;
+      return !!this.systemDark;
     },
     filteredActions() {
       return this.globalActions.filter(a => this.actionFilter === 'pending' ? a.status !== 'completed' : a.status === 'completed');
@@ -1256,6 +1529,14 @@ createApp({
       return buckets;
     },
   },
+  watch: {
+    searchQuery(val) {
+      clearTimeout(this.searchDebounce);
+      const kw = (val || '').trim();
+      if (!kw) { this.contentHits = []; return; }
+      this.searchDebounce = setTimeout(() => this.runContentSearch(kw), 280);
+    },
+  },
   updated() { this.refreshIcons(); },
   created() {
     // 全局注入访问口令：所有 /api 请求自动带上（列表、详情、看板、待办等）
@@ -1271,11 +1552,26 @@ createApp({
   },
   mounted() {
     window.addEventListener('popstate', this.onPopState);
+    window.addEventListener('hashchange', this.onHashChange);
     window.addEventListener('keydown', this.onKeyDown);
+    try { this.themeMode = localStorage.getItem('vh_theme') || 'system'; } catch(e) {}
+    if (window.matchMedia) {
+      try { this.systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
+    }
+    this.applyTheme();
+    if (window.matchMedia) {
+      try {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (ev) => {
+          this.systemDark = ev.matches;
+          if (this.themeMode === 'system') this.applyTheme();
+        });
+      } catch(e) {}
+    }
     this.checkAuth();
   },
   beforeUnmount() {
     window.removeEventListener('popstate', this.onPopState);
+    window.removeEventListener('hashchange', this.onHashChange);
     window.removeEventListener('keydown', this.onKeyDown);
     this.stopPolling();
     this.releaseStream();
@@ -1373,10 +1669,34 @@ createApp({
     refreshIcons() {
       nextTick(() => { if (window.lucide) try { lucide.createIcons(); } catch(e) {} });
     },
+    // --- 主题外观 ---
+    applyTheme() {
+      const dark = this.themeMode === 'dark' ||
+        (this.themeMode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.classList.toggle('dark', !!dark);
+    },
+    setTheme(m) {
+      this.themeMode = m;
+      try { localStorage.setItem('vh_theme', m); } catch(e) {}
+      this.applyTheme();
+      this.refreshIcons();
+    },
+    toggleThemeQuick() {
+      const goDark = !this.isDark;
+      this.setTheme(goDark ? 'dark' : 'light');
+      this.showToast(goDark ? '已切换到深色' : '已切换到浅色');
+    },
     vibrate(ms) { if (navigator.vibrate) try { navigator.vibrate(ms); } catch(e) {} },
     parseHash() {
       const h = location.hash.replace(/^#/, '') || '/recordings';
       const parts = h.split('/').filter(Boolean);
+      // 隐藏入口：访问 #/settings 可打开设置面板（顶栏按钮已隐藏）
+      if (parts[0] === 'settings') {
+        this.activeTab = 'recordings'; this.detailId = null; this.detailData = null;
+        this.openSettings();
+        history.replaceState(null, '', '#/recordings');
+        return;
+      }
       if (parts[0] === 'r' && parts[1]) {
         this.activeTab = 'recordings';
         if (this.detailId !== parts[1]) this.openDetail(parts[1], false);
@@ -1389,7 +1709,13 @@ createApp({
       }
     },
     onPopState() { this.parseHash(); },
+    // 页内直接改 hash 只会触发 hashchange（不触发 popstate），隐藏入口需要单独兜一下
+    onHashChange() {
+      const h = location.hash.replace(/^#/, '').replace(/^\//, '');
+      if (h === 'settings') this.parseHash();
+    },
     switchTab(tab) {
+      if (this.selectMode) { this.selectMode = false; this.selectedIds = []; }
       this.activeTab = tab;
       this.detailId = null; this.detailData = null;
       history.pushState(null, '', '#/' + tab);
@@ -1432,6 +1758,16 @@ createApp({
       try { const res = await fetch('/api/recordings/' + id); this.detailData = await res.json(); }
       catch(e) { if (!silent) this.showToast('加载详情失败', 'error'); }
     },
+    async runContentSearch(kw) {
+      try {
+        const res = await fetch('/api/recordings/search?q=' + encodeURIComponent(kw));
+        if (!res.ok) { this.contentHits = []; return; }
+        const data = await res.json();
+        if (kw === this.searchQuery.trim()) this.contentHits = data.items || [];
+      } catch (e) {
+        this.contentHits = [];
+      }
+    },
     openDetail(id, push) {
       if (push === undefined) push = true;
       this.detailId = id; this.detailData = null; this.detailTab = 'summary';
@@ -1458,6 +1794,10 @@ createApp({
       }
     },
     onKeyDown(e) {
+      if (e.key === 'Escape') {
+        if (this.showBatchTag) { this.showBatchTag = false; return; }
+        if (this.selectMode && !this.detailId) { this.exitSelectMode(); return; }
+      }
       if (e.key === 'Escape' && this.detailId && !this.actionSheet && !this.showUpload && !this.showSettings && !this.showNewTag && !this.showAssignTag && !this.renameRecording && !this.confirmDialog && !this.dashProjectId) {
         this.closeDetail();
       }
@@ -1719,6 +2059,7 @@ createApp({
     },
     // --- 卡片长按操作菜单 ---
     onCardClick(r) {
+      if (this.selectMode) { this.toggleSelect(r.id); return; }
       if (this.lpFired) { this.lpFired = false; return; }
       this.openDetail(r.id);
     },
@@ -1744,6 +2085,76 @@ createApp({
     closeDashboard() {
       this.dashProjectId = null;
       this.dashData = null;
+    },
+    // --- 批量操作 ---
+    toggleSelectMode() {
+      this.selectMode = !this.selectMode;
+      if (!this.selectMode) this.selectedIds = [];
+      this.refreshIcons();
+    },
+    exitSelectMode() {
+      this.selectMode = false;
+      this.selectedIds = [];
+      this.refreshIcons();
+    },
+    toggleSelect(id) {
+      const i = this.selectedIds.indexOf(id);
+      if (i >= 0) this.selectedIds.splice(i, 1);
+      else this.selectedIds.push(id);
+      this.refreshIcons();
+    },
+    toggleSelectAll() {
+      if (this.allFilteredSelected) this.selectedIds = [];
+      else this.selectedIds = this.filteredRecordings.map(r => r.id);
+      this.refreshIcons();
+    },
+    openBatchTag() {
+      if (!this.selectedIds.length) return;
+      this.batchTagIds = [];
+      this.showBatchTag = true;
+      this.refreshIcons();
+    },
+    async doBatchTag() {
+      if (this.batchTagging || !this.selectedIds.length) return;
+      this.batchTagging = true;
+      try {
+        const res = await fetch('/api/recordings/batch_assign_project', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ids: this.selectedIds.slice(), project_ids: this.batchTagIds.slice()})
+        });
+        if (res.ok) {
+          const d = await res.json();
+          this.showToast('已为 ' + (d.updated || this.selectedIds.length) + ' 条录音更新标签');
+          this.showBatchTag = false;
+          this.exitSelectMode();
+          this.fetchRecordings();
+          this.fetchActions();
+        } else {
+          this.showToast('批量打标签失败', 'error');
+        }
+      } catch(e) { this.showToast('网络错误', 'error'); }
+      this.batchTagging = false;
+    },
+    batchDelete() {
+      if (!this.selectedIds.length) return;
+      const n = this.selectedIds.length;
+      this.showConfirm('批量删除', '将永久删除所选的 ' + n + ' 条录音及其全部分析数据，不可恢复。', async () => {
+        try {
+          const res = await fetch('/api/recordings/batch_delete', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ids: this.selectedIds.slice()})
+          });
+          if (res.ok) {
+            const d = await res.json();
+            this.showToast('已删除 ' + (d.deleted || n) + ' 条录音');
+          } else {
+            this.showToast('批量删除失败', 'error');
+          }
+        } catch(e) { this.showToast('网络错误', 'error'); }
+        this.exitSelectMode();
+        this.fetchRecordings();
+        this.fetchActions();
+      });
     },
     async refreshDashboard() {
       if (this.dashRefreshing || !this.dashProjectId) return;
@@ -1773,6 +2184,7 @@ createApp({
       return map[type] || map.update;
     },
     cardPressStart(r) {
+      if (this.selectMode) return;
       this.lpFired = false;
       clearTimeout(this.lpTimer);
       this.lpTimer = setTimeout(() => {
@@ -1787,6 +2199,7 @@ createApp({
     },
     cardPressCancel() { this.cardPressEnd(); },
     openSheetFromContext(r) {
+      if (this.selectMode) { this.toggleSelect(r.id); return; }
       this.cardPressEnd();
       this.lpFired = true;
       this.actionSheet = r;

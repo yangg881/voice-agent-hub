@@ -592,6 +592,122 @@ async def retranscribe_recording(
     }
 
 
+@router.get("/search")
+def search_recordings(q: str = "", limit: int = 50, db: Session = Depends(get_db)):
+    """全文检索：标题 / 摘要 / 讨论主题 / 待办 / 决议 / 逐字稿"""
+    from sqlalchemy import or_
+
+    kw = (q or "").strip()
+    if not kw:
+        return {"query": kw, "count": 0, "items": []}
+
+    like = "%" + kw + "%"
+    low = kw.lower()
+    hits = {}
+
+    def touch(rid, kind, snippet):
+        if not rid:
+            return
+        if rid in hits:
+            if kind not in hits[rid]["match_types"]:
+                hits[rid]["match_types"].append(kind)
+            if snippet and not hits[rid]["snippet"]:
+                hits[rid]["snippet"] = snippet
+            return
+        rec = db.query(Recording).filter(Recording.id == rid).first()
+        if not rec:
+            return
+        hits[rid] = {
+            "id": rid,
+            "title": rec.title,
+            "created_at": rec.created_at,
+            "status": rec.status,
+            "duration_seconds": rec.duration_seconds,
+            "source_type": rec.source_type,
+            "match_types": [kind],
+            "snippet": snippet or "",
+        }
+
+    for rec in db.query(Recording).filter(Recording.title.ilike(like)).limit(limit).all():
+        touch(rec.id, "title", "")
+
+    for seg in db.query(PolishedSegment).filter(PolishedSegment.polished_text.ilike(like)).limit(limit * 4).all():
+        text = seg.polished_text or ""
+        pos = text.lower().find(low)
+        if pos >= 0:
+            snip = text[max(0, pos - 24): pos + 72]
+        else:
+            snip = text[:96]
+        touch(seg.recording_id, "transcript", snip)
+
+    rows = db.query(MeetingInsight).filter(or_(
+        MeetingInsight.executive_summary.ilike(like),
+        MeetingInsight.topics_json.ilike(like),
+        MeetingInsight.action_items_json.ilike(like),
+        MeetingInsight.decisions_json.ilike(like),
+        MeetingInsight.risks_json.ilike(like),
+    )).limit(limit).all()
+    for ins in rows:
+        touch(ins.recording_id, "insight", (ins.executive_summary or "")[:96])
+
+    items = sorted(hits.values(), key=lambda x: str(x.get("created_at") or ""), reverse=True)[:limit]
+    return {"query": kw, "count": len(items), "items": items}
+
+
+class BatchIdsPayload(BaseModel):
+    ids: list = []
+
+
+class BatchAssignPayload(BaseModel):
+    ids: list = []
+    project_ids: list = []
+
+
+@router.post("/batch_delete")
+def batch_delete_recordings(payload: BatchIdsPayload, db: Session = Depends(get_db)):
+    """批量删除录音：逐条复用单条删除的完整磁盘+数据库清理逻辑"""
+    deleted = 0
+    failed = []
+    for rid in (payload.ids or []):
+        if not rid:
+            continue
+        exists = db.query(Recording).filter(Recording.id == rid).first()
+        if not exists:
+            continue
+        try:
+            delete_recording(rid, db)
+            deleted += 1
+        except Exception as e:
+            db.rollback()
+            failed.append({"id": rid, "error": str(e)[:120]})
+    return {"status": "ok", "deleted": deleted, "failed": failed}
+
+
+@router.post("/batch_assign_project")
+def batch_assign_recordings(
+    payload: BatchAssignPayload,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """批量打标签：逐条复用单条归属逻辑（project_ids 为空则清空标签）"""
+    updated = 0
+    failed = []
+    inner = AssignProjectPayload(project_ids=list(payload.project_ids or []), reanalyze=False)
+    for rid in (payload.ids or []):
+        if not rid:
+            continue
+        exists = db.query(Recording).filter(Recording.id == rid).first()
+        if not exists:
+            continue
+        try:
+            assign_recording_project(rid, inner, background_tasks, db)
+            updated += 1
+        except Exception as e:
+            db.rollback()
+            failed.append({"id": rid, "error": str(e)[:120]})
+    return {"status": "ok", "updated": updated, "failed": failed}
+
+
 @router.get("")
 def list_recordings(skip: int = 0, limit: int = 50, project_id: Optional[str] = None, db: Session = Depends(get_db)):
     from sqlalchemy.orm import selectinload
