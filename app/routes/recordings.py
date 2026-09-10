@@ -819,8 +819,8 @@ def delete_recording(recording_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{recording_id}/audio")
-def stream_audio(recording_id: str, db: Session = Depends(get_db)):
-    """Audio streaming endpoint for web audio player with auto-healing fallback"""
+def stream_audio(recording_id: str, download: bool = False, db: Session = Depends(get_db)):
+    """Audio streaming endpoint for web audio player with auto-healing fallback and download support"""
     r = db.query(Recording).filter(Recording.id == recording_id).first()
     if not r:
         raise HTTPException(status_code=404, detail="未找到该录音记录")
@@ -853,16 +853,26 @@ def stream_audio(recording_id: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="音频文件不存在")
 
     media_type = "audio/mpeg"
+    ext = ".mp3"
     if target_path.endswith(".wav"):
         media_type = "audio/wav"
+        ext = ".wav"
     elif target_path.endswith(".m4a"):
         media_type = "audio/mp4"
+        ext = ".m4a"
     elif target_path.endswith(".webm"):
         media_type = "audio/webm"
+        ext = ".webm"
     elif target_path.endswith(".ogg"):
         media_type = "audio/ogg"
+        ext = ".ogg"
 
-    return FileResponse(target_path, media_type=media_type)
+    out_filename = None
+    if download:
+        clean_title = (r.title or "录音").replace('/', '_').replace('\\', '_')
+        out_filename = f"{clean_title}{ext}"
+
+    return FileResponse(target_path, media_type=media_type, filename=out_filename)
 
 
 @router.patch("/{recording_id}/action_items")

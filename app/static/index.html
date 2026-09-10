@@ -95,9 +95,13 @@
             <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             <span class="hidden xl:inline text-xs ml-1 font-medium">重转写</span>
           </button>
-          <button @click="exportDetail" title="导出 Markdown" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
+          <button @click="exportDetail" title="导出 Markdown 纪要" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span class="hidden xl:inline text-xs ml-1 font-medium">导出纪要</span>
+          </button>
+          <button @click="downloadAudio" title="下载原声录音" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
             <i data-lucide="download" class="w-4 h-4"></i>
-            <span class="hidden xl:inline text-xs ml-1 font-medium">导出</span>
+            <span class="hidden xl:inline text-xs ml-1 font-medium">下载录音</span>
           </button>
           <button @click="openAssignTag(detailData)" title="打标签" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition">
             <i data-lucide="tags" class="w-4 h-4"></i>
@@ -396,7 +400,8 @@
 
 
       <!-- ===== 页面4：纪要详情（居中沉浸式内页） ===== -->
-      <div v-if="detailId" class="max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 w-full animate-fade-in">
+      <div v-if="detailId" class="mx-auto px-4 sm:px-6 lg:px-8 py-5 w-full animate-fade-in"
+           :class="showSideTranscript && desktopDetailMode==='summary' ? 'max-w-7xl' : 'max-w-4xl xl:max-w-5xl'">
         <div v-if="!detailData" class="py-24 text-center text-slate-400">
           <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-3 text-brand-500"></i>
           <p class="text-sm font-medium text-slate-500">正在加载纪要详情...</p>
@@ -438,8 +443,12 @@
               <!-- 右侧快捷按钮（大屏显示辅助动作） -->
               <div class="flex items-center gap-2 shrink-0">
                 <button @click="exportDetail" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 rounded-lg transition">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                  <span>导出纪要</span>
+                </button>
+                <button @click="downloadAudio" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 rounded-lg transition">
                   <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                  <span>导出 Markdown</span>
+                  <span>下载录音</span>
                 </button>
                 <button @click="copyTranscript" v-if="detailData.polished_segments && detailData.polished_segments.length" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 rounded-lg transition">
                   <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -465,9 +474,13 @@
                 <div class="flex-1 flex items-center gap-3">
                   <audio ref="audioPlayer" :src="audioSrc" controls @timeupdate="onAudioTime" @play="onAudioTime" class="w-full h-10"></audio>
                 </div>
-                <!-- 倍速切换 -->
-                <div class="flex items-center gap-1 shrink-0 self-end sm:self-center">
-                  <span class="text-xs text-slate-400 mr-1 hidden sm:inline">倍速:</span>
+                <!-- 下载音频 + 倍速切换 -->
+                <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                  <button @click="downloadAudio" class="px-2.5 py-1 text-xs text-slate-600 hover:text-brand-600 hover:bg-brand-50 bg-white border border-slate-200 rounded-md transition flex items-center gap-1 shadow-xs" title="下载原声录音">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>下载录音</span>
+                  </button>
+                  <span class="text-xs text-slate-400 ml-1 hidden sm:inline">倍速:</span>
                   <button v-for="rate in [0.75, 1.0, 1.25, 1.5, 2.0]" :key="rate" @click="setPlaybackRate(rate)"
                           :class="playbackRate===rate ? 'bg-brand-600 text-white font-bold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
                           class="px-2 py-1 text-xs rounded-md transition font-mono">{{ rate }}x</button>
@@ -480,17 +493,30 @@
           <div class="flex items-center justify-between border-b border-slate-200 pb-2">
             <!-- 桌面端视图切换 (>= 1024px) -->
             <div class="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl gap-1">
-              <button @click="desktopDetailMode='dual'" :class="desktopDetailMode==='dual'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                <i data-lucide="columns" class="w-3.5 h-3.5"></i>双栏对照 (推荐)
+              <button @click="desktopDetailMode='summary'"
+                      :class="desktopDetailMode==='summary'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'"
+                      class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>智能纪要 (主要内容)
               </button>
-              <button @click="desktopDetailMode='summary'" :class="desktopDetailMode==='summary'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>智能纪要
+              <button @click="desktopDetailMode='actions'"
+                      :class="desktopDetailMode==='actions'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'"
+                      class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                <i data-lucide="check-square" class="w-3.5 h-3.5"></i>待办与决议
               </button>
-              <button @click="desktopDetailMode='transcript'" :class="desktopDetailMode==='transcript'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+              <button @click="desktopDetailMode='transcript'"
+                      :class="desktopDetailMode==='transcript'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'"
+                      class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                 <i data-lucide="align-left" class="w-3.5 h-3.5"></i>逐字稿全文
               </button>
-              <button @click="desktopDetailMode='actions'" :class="desktopDetailMode==='actions'?'bg-white text-brand-700 font-bold shadow-sm':'text-slate-600 hover:text-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                <i data-lucide="check-square" class="w-3.5 h-3.5"></i>待办与决议
+            </div>
+
+            <!-- 侧栏逐字稿折叠/展开开关（仅在智能纪要模式下展示） -->
+            <div class="hidden lg:flex items-center gap-2" v-if="desktopDetailMode==='summary'">
+              <button @click="showSideTranscript = !showSideTranscript"
+                      :class="showSideTranscript ? 'bg-brand-50 text-brand-700 border-brand-200 shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
+                      class="px-3 py-1.5 text-xs font-medium border rounded-lg transition flex items-center gap-1.5 hover:border-brand-300">
+                <i :data-lucide="showSideTranscript ? 'panel-right-close' : 'panel-right-open'" class="w-3.5 h-3.5"></i>
+                <span>{{ showSideTranscript ? '收起侧栏逐字稿' : '展开侧栏逐字稿 (' + ((detailData.polished_segments||[]).length) + '句)' }}</span>
               </button>
             </div>
 
@@ -501,44 +527,44 @@
                       class="px-3 py-2 text-sm transition-colors whitespace-nowrap shrink-0">{{ t.name }}</button>
             </div>
 
-            <div class="hidden lg:flex items-center text-xs text-slate-400">
+            <div class="hidden lg:flex items-center text-xs text-slate-400" v-if="desktopDetailMode!=='summary'">
               <span v-if="audioTimeMs>0">当前播放: {{ formatMs(audioTimeMs) }}</span>
             </div>
           </div>
 
           <!-- 3. 内容主体 -->
-          <!-- 模式 A：PC 双栏对照 (默认桌面模式) -->
-          <div v-if="desktopDetailMode==='dual'" class="hidden lg:grid lg:grid-cols-12 gap-6 items-start">
-            <!-- 左栏：AI 智能纪要 (5列) -->
-            <div class="lg:col-span-5 space-y-5">
+          <!-- 模式 1：智能纪要模式（主要内容全宽居中，逐字稿可从右侧展开或底部折叠卡片查看） -->
+          <div v-if="desktopDetailMode==='summary' && (detailTab==='summary' || isDesktop)" class="flex gap-6 items-start">
+            <!-- 左侧主内容区（会议摘要、讨论议题、待办清单、决议与风险、底部折叠逐字稿） -->
+            <div class="flex-1 min-w-0 space-y-6">
               <!-- 会议摘要 -->
-              <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+              <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm">
                 <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
                   <i data-lucide="sparkles" class="w-4 h-4 text-brand-500"></i>会议摘要
                 </h3>
-                <p v-if="detailData.insight && detailData.insight.executive_summary" class="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50/70 p-4 rounded-xl border border-slate-100 font-normal">
+                <p v-if="detailData.insight && detailData.insight.executive_summary" class="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50/70 p-4 sm:p-5 rounded-xl border border-slate-100 font-normal">
                   {{ detailData.insight.executive_summary }}
                 </p>
                 <p v-else class="text-sm text-slate-400 italic text-center py-6">暂无摘要内容</p>
               </div>
 
               <!-- 讨论主题 -->
-              <div v-if="detailData.insight && detailData.insight.topics && detailData.insight.topics.length" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+              <div v-if="detailData.insight && detailData.insight.topics && detailData.insight.topics.length" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
                 <h3 class="text-base font-bold text-slate-800 flex items-center justify-between">
                   <span class="flex items-center gap-2"><i data-lucide="hash" class="w-4 h-4 text-brand-500"></i>讨论主题</span>
                   <span class="text-xs font-normal text-slate-400">{{ detailData.insight.topics.length }} 个议题</span>
                 </h3>
                 <div class="space-y-3">
-                  <div v-for="(t,i) in detailData.insight.topics" :key="i" class="p-3.5 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition">
-                    <p v-if="typeof t==='string'" class="text-sm text-slate-700 leading-relaxed">{{ t }}</p>
+                  <div v-for="(t,i) in detailData.insight.topics" :key="i" class="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition">
+                    <p v-if="typeof t==='string'" class="text-sm sm:text-base text-slate-700 leading-relaxed">{{ t }}</p>
                     <template v-else>
                       <p class="text-sm sm:text-base font-semibold text-slate-800 flex items-center gap-2">
                         <span class="w-5 h-5 rounded-md bg-brand-100 text-brand-700 text-xs flex items-center justify-center font-bold shrink-0">{{ i+1 }}</span>
                         {{ t.title || t.topic || t.name || ('主题 ' + (i+1)) }}
                       </p>
-                      <p v-if="t.summary" class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">{{ t.summary }}</p>
-                      <ul v-if="t.points && t.points.length" class="mt-2 space-y-1">
-                        <li v-for="(pt,j) in t.points" :key="j" class="text-xs sm:text-sm text-slate-500 flex gap-1.5 leading-relaxed">
+                      <p v-if="t.summary" class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">{{ t.summary }}</p>
+                      <ul v-if="t.points && t.points.length" class="mt-2.5 space-y-1.5">
+                        <li v-for="(pt,j) in t.points" :key="j" class="text-xs sm:text-sm text-slate-500 flex gap-2 leading-relaxed">
                           <span class="text-brand-400 shrink-0">•</span><span>{{ pt }}</span>
                         </li>
                       </ul>
@@ -548,22 +574,22 @@
               </div>
 
               <!-- 待办任务 -->
-              <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+              <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
                 <h3 class="text-base font-bold text-slate-800 flex items-center justify-between">
                   <span class="flex items-center gap-2"><i data-lucide="check-square" class="w-4 h-4 text-brand-500"></i>待办事项</span>
                   <span v-if="detailData.insight && detailData.insight.action_items" class="text-xs font-normal text-slate-400">{{ detailData.insight.action_items.length }} 项</span>
                 </h3>
                 <div v-if="!detailData.insight || !detailData.insight.action_items || !detailData.insight.action_items.length" class="text-xs text-slate-400 text-center py-4">无待办事项</div>
-                <div v-else class="space-y-1.5">
-                  <div v-for="(item,i) in detailData.insight.action_items" :key="i" class="flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+                <div v-else class="space-y-2">
+                  <div v-for="(item,i) in detailData.insight.action_items" :key="i" class="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition border border-slate-100">
                     <button @click="toggleDetailAction(i)" class="mt-0.5 shrink-0 p-1 -m-1">
                       <i :data-lucide="item.status==='completed'?'check-square':'square'" :class="item.status==='completed'?'text-emerald-500':'text-slate-300 hover:text-slate-400'" class="w-4 h-4"></i>
                     </button>
                     <div class="flex-1 min-w-0">
-                      <p :class="item.status==='completed'?'line-through text-slate-400':'text-slate-700'" class="text-sm leading-relaxed">{{ item.task }}</p>
-                      <div class="flex gap-3 text-xs text-slate-400 mt-1 flex-wrap">
-                        <span v-if="item.owner" class="flex items-center gap-0.5"><i data-lucide="user" class="w-3 h-3"></i>{{ item.owner }}</span>
-                        <span v-if="item.due_date" class="flex items-center gap-0.5"><i data-lucide="calendar" class="w-3 h-3"></i>{{ item.due_date }}</span>
+                      <p :class="item.status==='completed'?'line-through text-slate-400':'text-slate-700'" class="text-sm sm:text-base leading-relaxed">{{ item.task }}</p>
+                      <div class="flex gap-3 text-xs text-slate-400 mt-1.5 flex-wrap">
+                        <span v-if="item.owner" class="flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5"></i>{{ item.owner }}</span>
+                        <span v-if="item.due_date" class="flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i>{{ item.due_date }}</span>
                       </div>
                     </div>
                   </div>
@@ -571,19 +597,19 @@
               </div>
 
               <!-- 决议与风险 -->
-              <div v-if="detailData.insight && ((detailData.insight.decisions && detailData.insight.decisions.length) || (detailData.insight.risks && detailData.insight.risks.length))" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
+              <div v-if="detailData.insight && ((detailData.insight.decisions && detailData.insight.decisions.length) || (detailData.insight.risks && detailData.insight.risks.length))" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-4">
                 <!-- 决议 -->
                 <div v-if="detailData.insight.decisions && detailData.insight.decisions.length">
-                  <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="award" class="w-4 h-4 text-emerald-500"></i>核心决议</h4>
-                  <div class="space-y-1.5">
-                    <div v-for="(d,i) in detailData.insight.decisions" :key="i" class="p-2.5 bg-brand-50/50 rounded-xl border border-brand-100 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  <h4 class="text-sm sm:text-base font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="award" class="w-4 h-4 text-emerald-500"></i>核心决议</h4>
+                  <div class="space-y-2">
+                    <div v-for="(d,i) in detailData.insight.decisions" :key="i" class="p-3 bg-brand-50/50 rounded-xl border border-brand-100 text-sm text-slate-700 leading-relaxed">
                       {{ typeof d==='string'?d:(d.decision||d.content||JSON.stringify(d)) }}
                     </div>
                   </div>
                 </div>
                 <!-- 风险提示 -->
                 <div v-if="detailData.insight.risks && detailData.insight.risks.length">
-                  <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>风险提示</h4>
+                  <h4 class="text-sm sm:text-base font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>风险提示</h4>
                   <div class="space-y-2">
                     <div v-for="(r,i) in detailData.insight.risks" :key="i" class="p-3 bg-rose-50/50 rounded-xl border border-rose-100 text-xs sm:text-sm">
                       <p class="text-rose-700 leading-relaxed font-medium">{{ typeof r==='string'?r:(r.risk||r.description) }}</p>
@@ -592,142 +618,130 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 底部可折叠逐字稿卡片 (默认折叠，极度省空间，随需点击展开) -->
+              <div v-if="detailData.polished_segments && detailData.polished_segments.length" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <button @click="transcriptExpandedBottom = !transcriptExpandedBottom" class="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50 transition text-left">
+                  <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                      <i data-lucide="align-left" class="w-4 h-4"></i>
+                    </span>
+                    <div>
+                      <h4 class="text-sm sm:text-base font-bold text-slate-800">逐字稿记录全文</h4>
+                      <p class="text-xs text-slate-400 mt-0.5">共 {{ detailData.polished_segments.length }} 句完整发言 · 点击展开核对原声与搜索</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg">
+                      {{ transcriptExpandedBottom ? '收起逐字稿' : '点击展开逐字稿' }}
+                    </span>
+                    <i :data-lucide="transcriptExpandedBottom ? 'chevron-up' : 'chevron-down'" class="w-4 h-4 text-slate-400"></i>
+                  </div>
+                </button>
+
+                <!-- 展开后的逐字稿区域 -->
+                <div v-if="transcriptExpandedBottom" class="p-5 border-t border-slate-100 space-y-4 animate-fade-in">
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="relative flex-1 max-w-sm">
+                      <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                      <input v-model="transcriptSearch" type="text" placeholder="在逐字稿中搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
+                      <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
+                    </div>
+                    <button @click="copyTranscript" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 border border-slate-200 rounded-lg transition">
+                      <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                      <span>复制全文</span>
+                    </button>
+                  </div>
+
+                  <div class="max-h-[500px] overflow-y-auto overscroll-contain pr-2 space-y-1">
+                    <div v-if="!filteredSegments.length" class="text-sm text-slate-400 text-center py-10">未找到相关发言</div>
+                    <div v-for="seg in filteredSegments" :key="seg.id" :id="'seg-bottom-'+seg.id"
+                         @click="seekToMs(seg.start_ms)"
+                         :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-xl':'hover:bg-slate-50 rounded-xl'"
+                         class="p-3 cursor-pointer transition border border-transparent">
+                      <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                        <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
+                        <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
+                      </div>
+                      <p class="text-sm text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- 右栏：逐字稿工作台 (7列) -->
-            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col sticky top-4">
-              <!-- 逐字稿工具栏 -->
-              <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 shrink-0">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-base font-bold text-slate-800 flex items-center gap-1.5">
-                    <i data-lucide="align-left" class="w-4 h-4 text-brand-500"></i>逐字稿
-                  </h3>
-                  <span class="text-xs text-slate-400 font-mono">({{ filteredSegments.length }}/{{ (detailData.polished_segments||[]).length }} 句)</span>
+            <!-- 可折叠侧栏紧凑逐字稿（仅在点击“展开侧栏逐字稿”时滑出，宽度仅 360px，绝不喧宾夺主） -->
+            <div v-if="showSideTranscript" class="hidden lg:flex w-80 xl:w-96 shrink-0 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex-col sticky top-4 max-h-[calc(100vh-160px)] animate-slide-in">
+              <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-100 shrink-0">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1"><i data-lucide="align-left" class="w-3.5 h-3.5 text-brand-500"></i>侧栏逐字稿</h4>
+                  <span class="text-[11px] text-slate-400 font-mono">({{ filteredSegments.length }}句)</span>
                 </div>
-                <div class="flex items-center gap-2 flex-1 max-w-xs">
-                  <div class="relative w-full">
-                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input v-model="transcriptSearch" type="text" placeholder="搜索发言内容..." class="w-full pl-8 pr-7 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:border-brand-300 focus:outline-none transition">
-                    <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
-                  </div>
+                <div class="flex items-center gap-1">
+                  <button @click="copyTranscript" class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-50 transition" title="复制全文"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                  <button @click="showSideTranscript=false" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition" title="收起侧栏"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
-                <button @click="copyTranscript" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 rounded-lg transition shrink-0" title="复制全文">
-                  <i data-lucide="copy" class="w-4 h-4"></i>
-                </button>
               </div>
-
-              <!-- 逐字稿内容列表 -->
-              <div ref="transcriptContainer" class="mt-3 overflow-y-auto overscroll-contain pr-2 space-y-1 max-h-[calc(100vh-280px)]" style="min-height: 380px;">
-                <div v-if="!filteredSegments.length" class="text-sm text-slate-400 text-center py-16">
-                  {{ transcriptSearch ? '未匹配到包含关键词的发言' : '暂无逐字稿' }}
+              <div class="pt-2 pb-2 shrink-0">
+                <div class="relative w-full">
+                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                  <input v-model="transcriptSearch" type="text" placeholder="搜索内容..." class="w-full pl-8 pr-7 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
+                  <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
                 </div>
+              </div>
+              <div ref="transcriptContainer" class="flex-1 overflow-y-auto overscroll-contain pr-1 space-y-1">
+                <div v-if="!filteredSegments.length" class="text-xs text-slate-400 text-center py-10">未找到相关发言</div>
                 <div v-for="seg in filteredSegments" :key="seg.id" :id="'seg-'+seg.id"
                      @click="seekToMs(seg.start_ms)"
-                     :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-xl':'hover:bg-slate-50/80 rounded-xl'"
-                     class="p-3 cursor-pointer transition border border-transparent">
-                  <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-                    <span class="font-semibold text-brand-600 flex items-center gap-1">
-                      <span class="w-2 h-2 rounded-full bg-brand-400"></span>
-                      {{ seg.speaker_id || '发言人' }}
-                    </span>
-                    <span class="font-mono hover:text-brand-600 flex items-center gap-0.5">
-                      <i data-lucide="play" class="w-2.5 h-2.5 opacity-60"></i>
-                      {{ formatMs(seg.start_ms) }}
-                    </span>
+                     :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-lg':'hover:bg-slate-50 rounded-lg'"
+                     class="p-2.5 cursor-pointer transition border border-transparent">
+                  <div class="flex items-center justify-between text-[11px] text-slate-400 mb-0.5">
+                    <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
+                    <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2 h-2 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
                   </div>
-                  <p class="text-sm sm:text-base text-slate-700 leading-relaxed font-normal">{{ seg.polished_text }}</p>
+                  <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 模式 B / 移动端视图：单列模式 (或屏幕 < 1024px) -->
-          <div :class="desktopDetailMode==='dual' ? 'block lg:hidden' : 'block'" class="space-y-5">
-            <!-- 摘要 Tab -->
-            <div v-if="detailTab==='summary' || desktopDetailMode==='summary'" class="space-y-5">
-              <!-- 会议摘要 -->
-              <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
-                <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  <i data-lucide="sparkles" class="w-4 h-4 text-brand-500"></i>会议摘要
-                </h3>
-                <p v-if="detailData.insight && detailData.insight.executive_summary" class="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50/70 p-4 rounded-xl border border-slate-100">
-                  {{ detailData.insight.executive_summary }}
-                </p>
-                <p v-else class="text-sm text-slate-400 italic text-center py-6">暂无摘要内容</p>
+          <!-- 模式 2：独立逐字稿全文页 (当切换到逐字稿 Tab 时) -->
+          <div v-if="desktopDetailMode==='transcript' || detailTab==='transcript'" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="align-left" class="w-4 h-4 text-brand-500"></i>逐字稿全文</h3>
+                <span class="text-xs text-slate-400 font-mono">({{ filteredSegments.length }} 句)</span>
               </div>
-
-              <!-- 讨论主题 -->
-              <div v-if="detailData.insight && detailData.insight.topics && detailData.insight.topics.length" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-                <h3 class="text-base font-bold text-slate-800 flex items-center justify-between">
-                  <span class="flex items-center gap-2"><i data-lucide="hash" class="w-4 h-4 text-brand-500"></i>讨论主题</span>
-                  <span class="text-xs font-normal text-slate-400">{{ detailData.insight.topics.length }} 个议题</span>
-                </h3>
-                <div class="space-y-3">
-                  <div v-for="(t,i) in detailData.insight.topics" :key="i" class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <p v-if="typeof t==='string'" class="text-sm text-slate-700 leading-relaxed">{{ t }}</p>
-                    <template v-else>
-                      <p class="text-sm sm:text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-md bg-brand-100 text-brand-700 text-xs flex items-center justify-center font-bold shrink-0">{{ i+1 }}</span>
-                        {{ t.title || t.topic || t.name || ('主题 ' + (i+1)) }}
-                      </p>
-                      <p v-if="t.summary" class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">{{ t.summary }}</p>
-                      <ul v-if="t.points && t.points.length" class="mt-2 space-y-1">
-                        <li v-for="(pt,j) in t.points" :key="j" class="text-xs sm:text-sm text-slate-500 flex gap-1.5 leading-relaxed">
-                          <span class="text-brand-400 shrink-0">•</span><span>{{ pt }}</span>
-                        </li>
-                      </ul>
-                    </template>
-                  </div>
+              <div class="flex items-center gap-2 flex-1 max-w-xs">
+                <div class="relative w-full">
+                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                  <input v-model="transcriptSearch" type="text" placeholder="搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
+                  <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
                 </div>
               </div>
-
-              <!-- 风险提示 -->
-              <div v-if="detailData.insight && detailData.insight.risks && detailData.insight.risks.length" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-2">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>风险提示</h3>
-                <div class="space-y-2">
-                  <div v-for="(r,i) in detailData.insight.risks" :key="i" class="p-3 bg-rose-50/50 rounded-xl border border-rose-100 text-xs sm:text-sm">
-                    <p class="text-rose-700 leading-relaxed font-medium">{{ typeof r==='string'?r:(r.risk||r.description) }}</p>
-                    <p v-if="r.suggestion" class="text-slate-600 mt-1 leading-relaxed"><span class="font-semibold text-emerald-600">应对建议:</span> {{ r.suggestion }}</p>
-                  </div>
+              <button @click="copyTranscript" class="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 rounded-lg transition" title="复制全文"><i data-lucide="copy" class="w-4 h-4"></i></button>
+            </div>
+            <div class="space-y-1">
+              <div v-if="!filteredSegments.length" class="text-sm text-slate-400 text-center py-12">
+                {{ transcriptSearch ? '未找到相关发言' : '暂无逐字稿' }}
+              </div>
+              <div v-for="seg in filteredSegments" :key="seg.id" :id="'seg-single-'+seg.id"
+                   @click="seekToMs(seg.start_ms)"
+                   :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-xl':'hover:bg-slate-50 rounded-xl'"
+                   class="p-3 cursor-pointer transition border border-transparent">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
+                  <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
                 </div>
+                <p class="text-sm sm:text-base text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
               </div>
             </div>
+          </div>
 
-            <!-- 逐字稿 Tab -->
-            <div v-if="detailTab==='transcript' || desktopDetailMode==='transcript'" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-              <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-base font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="align-left" class="w-4 h-4 text-brand-500"></i>逐字稿全文</h3>
-                  <span class="text-xs text-slate-400 font-mono">({{ filteredSegments.length }} 句)</span>
-                </div>
-                <div class="flex items-center gap-2 flex-1 max-w-xs">
-                  <div class="relative w-full">
-                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input v-model="transcriptSearch" type="text" placeholder="搜索发言..." class="w-full pl-8 pr-7 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none">
-                    <button v-if="transcriptSearch" @click="transcriptSearch=''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
-                  </div>
-                </div>
-                <button @click="copyTranscript" class="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 rounded-lg" title="复制全文"><i data-lucide="copy" class="w-4 h-4"></i></button>
-              </div>
-              <div class="space-y-1">
-                <div v-if="!filteredSegments.length" class="text-sm text-slate-400 text-center py-12">
-                  {{ transcriptSearch ? '未找到相关发言' : '暂无逐字稿' }}
-                </div>
-                <div v-for="seg in filteredSegments" :key="seg.id" :id="'seg-single-'+seg.id"
-                     @click="seekToMs(seg.start_ms)"
-                     :class="isCurrentSegment(seg)?'border-l-4 border-brand-600 bg-brand-50/60 shadow-sm rounded-r-xl':'hover:bg-slate-50 rounded-xl'"
-                     class="p-3 cursor-pointer transition border border-transparent">
-                  <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-                    <span class="font-semibold text-brand-600">{{ seg.speaker_id || '发言人' }}</span>
-                    <span class="font-mono hover:text-brand-600 flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 opacity-60"></i>{{ formatMs(seg.start_ms) }}</span>
-                  </div>
-                  <p class="text-sm sm:text-base text-slate-700 leading-relaxed">{{ seg.polished_text }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- 待办 Tab -->
-            <div v-if="detailTab==='actions' || desktopDetailMode==='actions'" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+          <!-- 模式 3：独立待办与决议页 (当切换到待办与决议 Tab 时) -->
+          <div v-if="desktopDetailMode==='actions' || detailTab==='actions' || detailTab==='decisions'" class="space-y-5">
+            <!-- 待办清单 -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
               <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i data-lucide="check-square" class="w-4 h-4 text-brand-500"></i>待办清单</h3>
               <div v-if="!detailData.insight || !detailData.insight.action_items || !detailData.insight.action_items.length" class="text-sm text-slate-400 text-center py-8">无待办事项</div>
               <div v-else class="space-y-2">
@@ -746,8 +760,8 @@
               </div>
             </div>
 
-            <!-- 决议 Tab -->
-            <div v-if="detailTab==='decisions' || desktopDetailMode==='actions'" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+            <!-- 关键决议 -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
               <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i data-lucide="award" class="w-4 h-4 text-brand-500"></i>关键决议</h3>
               <div v-if="!detailData.insight || !detailData.insight.decisions || !detailData.insight.decisions.length" class="text-sm text-slate-400 text-center py-8">无决议记录</div>
               <div v-else class="space-y-2">
@@ -759,7 +773,6 @@
           </div>
         </div>
       </div>
-
     </main>
   </div>
 
@@ -792,7 +805,10 @@
         <i data-lucide="tags" class="w-5 h-5 text-slate-400"></i>设置标签
       </button>
       <button @click="sheetExport" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
-        <i data-lucide="download" class="w-5 h-5 text-slate-400"></i>导出 Markdown
+        <i data-lucide="file-text" class="w-5 h-5 text-slate-400"></i>导出 Markdown 纪要
+      </button>
+      <button @click="sheetDownloadAudio" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition">
+        <i data-lucide="download" class="w-5 h-5 text-slate-400"></i>下载原声录音
       </button>
       <button @click="sheetDelete" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded-lg transition">
         <i data-lucide="trash-2" class="w-5 h-5 text-rose-400"></i>删除
@@ -1153,7 +1169,9 @@ createApp({
       detailDragBack: false,
       ddStartY: 0,
       ddActive: false,
-      desktopDetailMode: 'dual',
+      desktopDetailMode: 'summary',
+      showSideTranscript: false,
+      transcriptExpandedBottom: false,
       transcriptSearch: '',
       playbackRate: 1.0,
     };
@@ -1192,6 +1210,9 @@ createApp({
       return this.appendToken(base);
     },
     // 桌面端：按日分组（今天/昨天/本周/更早）
+    isDesktop() {
+      return typeof window !== 'undefined' && window.innerWidth >= 1024;
+    },
     filteredSegments() {
       if (!this.detailData || !this.detailData.polished_segments) return [];
       if (!this.transcriptSearch.trim()) return this.detailData.polished_segments;
@@ -1488,7 +1509,14 @@ createApp({
         this.fetchRecordings(true);
       });
     },
-    exportDetail() { window.open('/api/recordings/' + this.detailId + '/export', '_blank'); },
+    exportDetail() {
+      const url = this.appendToken('/api/recordings/' + this.detailId + '/export');
+      window.open(url, '_blank');
+    },
+    downloadAudio() {
+      const url = this.appendToken('/api/recordings/' + this.detailId + '/audio?download=1');
+      window.open(url, '_blank');
+    },
     deleteDetail() {
       this.showConfirm('删除录音', '将永久删除该录音及其所有分析数据，不可恢复。', async () => {
         await fetch('/api/recordings/' + this.detailId, {method:'DELETE'});
@@ -1525,7 +1553,9 @@ createApp({
       if (!seg || this._lastSegId === seg.id) return;
       this._lastSegId = seg.id;
       nextTick(() => {
-        const el = document.getElementById('seg-' + seg.id) || document.getElementById('seg-single-' + seg.id);
+        const el = document.getElementById('seg-' + seg.id) ||
+                   document.getElementById('seg-bottom-' + seg.id) ||
+                   document.getElementById('seg-single-' + seg.id);
         if (el) el.scrollIntoView({block:'center', behavior:'smooth'});
       });
     },
@@ -1775,7 +1805,14 @@ createApp({
     sheetExport() {
       const r = this.actionSheet;
       this.actionSheet = null;
-      window.open('/api/recordings/' + r.id + '/export', '_blank');
+      const url = this.appendToken('/api/recordings/' + r.id + '/export');
+      window.open(url, '_blank');
+    },
+    sheetDownloadAudio() {
+      const r = this.actionSheet;
+      this.actionSheet = null;
+      const url = this.appendToken('/api/recordings/' + r.id + '/audio?download=1');
+      window.open(url, '_blank');
     },
     sheetDelete() {
       const r = this.actionSheet;
