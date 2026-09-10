@@ -534,6 +534,23 @@ async def retranscribe_recording(
         raise HTTPException(status_code=404, detail="未找到该录音记录")
 
     chunks = db.query(AsrSegment).filter(AsrSegment.recording_id == recording_id).order_by(AsrSegment.seq_order.asc()).all()
+
+    # For uploaded whole audio files or recordings with 0 segments, re-run full pipeline
+    if recording.source_type == "upload" or not chunks:
+        recording.status = "pending"
+        recording.progress = 5
+        recording.status_message = "正在重新触发全流程流水线处理录音..."
+        recording.error_message = None
+        db.commit()
+        background_tasks.add_task(run_pipeline, recording_id, asr_provider)
+        return {
+            "status": "ok",
+            "recording_id": recording_id,
+            "retranscribed_count": 0,
+            "total_chunks": len(chunks),
+            "message": "已成功重新触发全流程流水线处理录音文件！",
+        }
+
     provider = get_asr_provider(asr_provider or settings.DEFAULT_ASR_PROVIDER)
 
     retranscribed_count = 0

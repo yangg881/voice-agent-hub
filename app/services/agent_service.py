@@ -231,7 +231,7 @@ class MeetingAgentService:
             "response_format": {"type": "json_object"}
         }
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=240.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"DeepSeek Agent 失败: {resp.text}")
@@ -262,7 +262,7 @@ class MeetingAgentService:
             }
         }
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=240.0) as client:
             resp = await client.post(url, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"Gemini Agent 失败: {resp.text}")
@@ -292,7 +292,7 @@ class MeetingAgentService:
             "response_format": {"type": "json_object"}
         }
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=240.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"DashScope Agent 失败: {resp.text}")

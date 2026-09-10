@@ -13,7 +13,7 @@ class AsrSegmentData(BaseModel):
 
 class BaseAsrProvider(ABC):
     @abstractmethod
-    async def transcribe(self, audio_file_path: str, recording_id: str) -> List[AsrSegmentData]:
+    async def transcribe(self, audio_file_path: str, recording_id: str, **kwargs) -> List[AsrSegmentData]:
         """Transcribe audio and return segments with speakers and timestamps"""
         pass
 

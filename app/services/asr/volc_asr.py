@@ -6,7 +6,8 @@ import logging
 import os
 import struct
 import uuid
-from typing import List, Optional, Union
+import time
+from typing import List, Optional, Union, Callable, Any
 import httpx
 import websockets
 
@@ -305,7 +306,11 @@ class VolcBigModelAucProvider:
         if not self.resource_id or "sauc" in self.resource_id:
             self.resource_id = "volc.bigasr.auc"
 
-    async def transcribe_file(self, audio_file_path: str) -> List[AsrSegmentData]:
+    async def transcribe_file(
+        self,
+        audio_file_path: str,
+        progress_callback: Optional[Callable[[str], Any]] = None
+    ) -> List[AsrSegmentData]:
         if not self.app_id or not self.token:
             raise ValueError("未配置火山引擎 AppID 或 Token！请在系统设置中配置。")
 
@@ -324,10 +329,15 @@ class VolcBigModelAucProvider:
             "X-Api-Request-Id": task_id,
             "X-Api-Sequence": "-1",
         }
+
+        # Dynamically determine audio format (mp3 / wav)
+        ext = os.path.splitext(audio_file_path)[1].lower().lstrip(".")
+        format_name = "mp3" if ext == "mp3" else ("wav" if ext == "wav" else "mp3")
+
         payload = {
             "user": {"uid": "voice_agent_user"},
             "audio": {
-                "format": "wav",
+                "format": format_name,
                 "data": b64_audio,
             },
             "request": {
@@ -339,7 +349,8 @@ class VolcBigModelAucProvider:
             },
         }
 
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        # Allow 120s for submitting large audio files (up to 1 hour / 50MB)
+        async with httpx.AsyncClient(timeout=120.0) as client:
             submit_resp = await client.post(self.SUBMIT_URL, headers=headers, json=payload)
             if submit_resp.status_code != 200:
                 raise RuntimeError(f"火山引擎 AUC Submit 失败 ({submit_resp.status_code}): {submit_resp.text}")
@@ -350,6 +361,8 @@ class VolcBigModelAucProvider:
                 raise RuntimeError(f"火山引擎 AUC Submit 错误 ({status_code_hdr}): {msg_hdr}")
 
             # Poll for result
+            # For 1-hour recordings (3600s), AUC typically takes 2~5 minutes.
+            # We allow up to 450 polls * 2.0s = 900s (15 minutes).
             query_headers = {
                 "X-Api-App-Key": self.app_id,
                 "X-Api-Access-Key": self.token,
@@ -357,8 +370,13 @@ class VolcBigModelAucProvider:
                 "X-Api-Request-Id": task_id,
             }
 
-            for _ in range(25):  # up to 20 seconds
-                await asyncio.sleep(0.8)
+            poll_interval = 2.0
+            max_polls = 450
+            start_poll_time = time.time()
+
+            for poll_idx in range(max_polls):
+                await asyncio.sleep(poll_interval)
+                elapsed = int(time.time() - start_poll_time)
                 query_resp = await client.post(self.QUERY_URL, headers=query_headers, json={})
                 q_code = query_resp.headers.get("x-api-status-code")
 
@@ -373,9 +391,10 @@ class VolcBigModelAucProvider:
                         for i, u in enumerate(utterances):
                             u_text = u.get("text", "").strip()
                             if u_text:
+                                speaker_tag = u.get("speaker") or u.get("additions", {}).get("speaker") or "1"
                                 segments.append(
                                     AsrSegmentData(
-                                        speaker_id="发言人 1",
+                                        speaker_id=f"发言人 {speaker_tag}",
                                         start_ms=u.get("start_time", 0),
                                         end_ms=u.get("end_time", 0),
                                         raw_text=u_text,
@@ -383,9 +402,11 @@ class VolcBigModelAucProvider:
                                     )
                                 )
                         if segments:
+                            logger.info("Volcengine AUC task %s finished in %ds (%d segments)", task_id, elapsed, len(segments))
                             return segments
 
                     if full_text:
+                        logger.info("Volcengine AUC task %s finished in %ds (full text)", task_id, elapsed)
                         return [
                             AsrSegmentData(
                                 speaker_id="发言人 1",
@@ -395,12 +416,25 @@ class VolcBigModelAucProvider:
                                 seq_order=1,
                             )
                         ]
+
                 q_msg = query_resp.headers.get("x-api-message", "")
                 if (
                     q_code in ["20000001", "20000002", "45000010", "45000011"]
                     or "processing" in q_msg.lower()
                     or "requested grant not found" in q_msg
                 ):
+                    # Send live progress heartbeat every ~10 seconds
+                    if poll_idx % 5 == 0:
+                        elapsed_m = elapsed // 60
+                        elapsed_s = elapsed % 60
+                        time_display = f"{elapsed_m}分{elapsed_s}秒" if elapsed_m > 0 else f"{elapsed_s}秒"
+                        heartbeat = f"火山引擎正在深度转写中 (已处理 {time_display}，长录音预计需 2~5 分钟)..."
+                        logger.info("Task %s: %s", task_id, heartbeat)
+                        if progress_callback:
+                            try:
+                                progress_callback(heartbeat)
+                            except Exception:
+                                pass
                     continue
 
                 # 20000003: [Normal silence audio] Handle response: no valid speech in audio
@@ -412,7 +446,7 @@ class VolcBigModelAucProvider:
                 if q_code and q_code != "20000000":
                     raise RuntimeError(f"火山引擎 AUC Query 报错 ({q_code}): {q_msg}")
 
-        raise TimeoutError("火山引擎录音转写任务超时未返回结果")
+        raise TimeoutError(f"火山引擎录音转写任务超时未返回结果 (已持续等待 {int(time.time() - start_poll_time)} 秒)")
 
 
 
@@ -451,30 +485,17 @@ class VolcAsrProvider(BaseAsrProvider):
             cluster_id=getattr(settings, "VOLC_STREAMING_CLUSTER_ID", "") or "volc.bigasr.sauc.duration",
         )
 
-    async def transcribe(self, audio_file_path: str, recording_id: str) -> List[AsrSegmentData]:
+    async def transcribe(self, audio_file_path: str, recording_id: str, **kwargs) -> List[AsrSegmentData]:
         if not self.app_id or not self.token:
             raise ValueError("未配置火山引擎凭证！请在设置中配置 AppID / Token。")
 
+        progress_callback = kwargs.get("progress_callback")
         try:
-            segments = await self.auc_provider.transcribe_file(audio_file_path)
+            segments = await self.auc_provider.transcribe_file(audio_file_path, progress_callback=progress_callback)
             if segments:
                 return segments
         except Exception as auc_err:
-            logger.warning("BigModel AUC failed: %s, checking streaming fallback...", auc_err)
-            try:
-                text = await self.stream_provider.transcribe_chunk(audio_file_path)
-                if text:
-                    return [
-                        AsrSegmentData(
-                            speaker_id="发言人 1",
-                            start_ms=0,
-                            end_ms=5000,
-                            raw_text=text,
-                            seq_order=1,
-                        )
-                    ]
-            except Exception:
-                pass
+            logger.warning("BigModel AUC failed: %s", auc_err)
             raise auc_err
 
         return []

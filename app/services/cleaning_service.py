@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import re
 import json
 import httpx
@@ -5,6 +7,8 @@ from typing import List
 from pydantic import BaseModel
 from app.config import settings
 from app.services.asr.base import AsrSegmentData
+
+logger = logging.getLogger(__name__)
 
 
 class PolishedSegmentData(BaseModel):
@@ -40,11 +44,43 @@ class CleaningService:
 ]
 """
 
+    BATCH_SIZE = 35
+
     @classmethod
     async def polish_segments(cls, segments: List[AsrSegmentData]) -> List[PolishedSegmentData]:
         if not segments:
             return []
 
+        # For small recordings (<= 35 segments), process directly
+        if len(segments) <= cls.BATCH_SIZE:
+            return await cls._polish_single_batch(segments)
+
+        # For long recordings (e.g. 1 hour with 500+ segments), split into batches
+        batches = [segments[i : i + cls.BATCH_SIZE] for i in range(0, len(segments), cls.BATCH_SIZE)]
+        logger.info("Splitting %d segments into %d batches for concurrent polishing", len(segments), len(batches))
+
+        sem = asyncio.Semaphore(4)
+
+        async def _safe_batch_polish(b: List[AsrSegmentData]) -> List[PolishedSegmentData]:
+            async with sem:
+                try:
+                    return await cls._polish_single_batch(b)
+                except Exception as err:
+                    logger.warning("Batch polishing failed: %s, falling back to rule-based for this batch", err)
+                    return cls._polish_with_rules(b)
+
+        tasks = [_safe_batch_polish(b) for b in batches]
+        results_nested = await asyncio.gather(*tasks)
+
+        all_polished = []
+        for r in results_nested:
+            all_polished.extend(r)
+
+        all_polished.sort(key=lambda x: x.seq_order)
+        return all_polished
+
+    @classmethod
+    async def _polish_single_batch(cls, segments: List[AsrSegmentData]) -> List[PolishedSegmentData]:
         provider = (settings.DEFAULT_LLM_PROVIDER or "deepseek").lower()
 
         # Try preferred provider first
@@ -52,34 +88,34 @@ class CleaningService:
             try:
                 return await cls._polish_with_deepseek(segments)
             except Exception as e:
-                print(f"DeepSeek 抛光失败: {e}，尝试备选方案")
+                logger.warning("DeepSeek 抛光失败: %s，尝试备选方案", e)
         elif provider == "gemini" and settings.GEMINI_API_KEY:
             try:
                 return await cls._polish_with_gemini(segments)
             except Exception as e:
-                print(f"Gemini 抛光失败: {e}，尝试备选方案")
+                logger.warning("Gemini 抛光失败: %s，尝试备选方案", e)
         elif provider == "dashscope" and settings.DASHSCOPE_API_KEY:
             try:
                 return await cls._polish_with_dashscope(segments)
             except Exception as e:
-                print(f"DashScope 抛光失败: {e}，尝试备选方案")
+                logger.warning("DashScope 抛光失败: %s，尝试备选方案", e)
 
         # Fallback to any available configured provider
         if settings.DEEPSEEK_API_KEY and provider != "deepseek":
             try:
                 return await cls._polish_with_deepseek(segments)
             except Exception as e:
-                print(f"DeepSeek 备选抛光失败: {e}")
+                logger.warning("DeepSeek 备选抛光失败: %s", e)
         elif settings.GEMINI_API_KEY and provider != "gemini":
             try:
                 return await cls._polish_with_gemini(segments)
             except Exception as e:
-                print(f"Gemini 备选抛光失败: {e}")
+                logger.warning("Gemini 备选抛光失败: %s", e)
         elif settings.DASHSCOPE_API_KEY and provider != "dashscope":
             try:
                 return await cls._polish_with_dashscope(segments)
             except Exception as e:
-                print(f"DashScope 备选抛光失败: {e}")
+                logger.warning("DashScope 备选抛光失败: %s", e)
 
         # Fallback heuristic / rule-based cleaning
         return cls._polish_with_rules(segments)
@@ -104,7 +140,7 @@ class CleaningService:
             }
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             resp = await client.post(url, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"Gemini API 报错 (HTTP {resp.status_code}): {resp.text}")
@@ -155,7 +191,7 @@ class CleaningService:
             "response_format": {"type": "json_object"}
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"DeepSeek API 报错: {resp.text}")
@@ -206,7 +242,7 @@ class CleaningService:
             "response_format": {"type": "json_object"}
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"DashScope API 报错: {resp.text}")

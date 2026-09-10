@@ -177,7 +177,16 @@ async def run_pipeline(recording_id: str, asr_provider_name: str = None):
         recording.status_message = "正在调用 ASR 引擎识别语音并分离说话人角色..."
         db.commit()
 
-        raw_segments_data = await provider.transcribe(processed_path, recording.id)
+        def on_asr_progress(status_msg: str):
+            try:
+                rec_cur = db.query(Recording).filter(Recording.id == recording_id).first()
+                if rec_cur:
+                    rec_cur.status_message = status_msg
+                    db.commit()
+            except Exception:
+                pass
+
+        raw_segments_data = await provider.transcribe(processed_path, recording.id, progress_callback=on_asr_progress)
 
         # Dual Track Store 1: Save raw verbatim segments
         db.query(AsrSegment).filter(AsrSegment.recording_id == recording.id).delete()
@@ -196,7 +205,7 @@ async def run_pipeline(recording_id: str, asr_provider_name: str = None):
         # Stage 3: LLM Text Polishing
         recording.status = "cleaning"
         recording.progress = 65
-        recording.status_message = "正在调用 Flash 模型进行口语清洗与规整..."
+        recording.status_message = f"正在调用大模型分批规整口语文本 (共 {len(raw_segments_data)} 个对话片段)..."
         db.commit()
 
         polished_segments_data = await CleaningService.polish_segments(raw_segments_data)
